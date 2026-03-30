@@ -15,8 +15,24 @@ function loadVoices() {
     voiceSelect.appendChild(option);
   });
 }
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  voiceSelect.innerHTML = "";
 
+  voices.forEach((voice, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = `${voice.name} (${voice.lang})`;
+    voiceSelect.appendChild(option);
+  });
+}
+
+// ✅ KEEP THIS
 speechSynthesis.onvoiceschanged = loadVoices;
+
+// ✅ ADD THESE (fix)
+loadVoices();
+setTimeout(loadVoices, 1000);
 
 // ===== Preview =====
 function preview() {
