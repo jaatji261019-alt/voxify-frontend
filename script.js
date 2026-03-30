@@ -1,45 +1,60 @@
 const textEl = document.getElementById("text");
 const player = document.getElementById("player");
+const language = document.getElementById("language");
+const voiceSelect = document.getElementById("voiceSelect");
 
-// ===== Chunking =====
-function chunkText(text, size = 300) {
-  let chunks = [];
-  for (let i = 0; i < text.length; i += size) {
-    chunks.push(text.slice(i, i + size));
-  }
-  return chunks;
+// ===== Load voices =====
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  voiceSelect.innerHTML = "";
+
+  voices.forEach((voice, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = `${voice.name} (${voice.lang})`;
+    voiceSelect.appendChild(option);
+  });
 }
+
+speechSynthesis.onvoiceschanged = loadVoices;
 
 // ===== Preview =====
 function preview() {
-  const text = textEl.value || "This is preview";
+  const text = textEl.value || "Voice preview";
 
   const speech = new SpeechSynthesisUtterance(text);
-  speech.lang = "en-US";
 
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(speech);
+  const voices = speechSynthesis.getVoices();
+  const selectedVoice = voices[voiceSelect.value];
+
+  if (selectedVoice) speech.voice = selectedVoice;
+
+  speech.lang = language.value;
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(speech);
 }
 
-// ===== Generate =====
+// ===== Generate (backend)
 async function generate() {
   if (!textEl.value) return alert("Enter text");
 
-  const chunks = chunkText(textEl.value);
-
-  const res = await fetch("http:// https://voxify-ai.onrender.com/tts", {
+  const res = await fetch("https://voxify-ai.onrender.com/tts", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify({ chunks }),
+    body: JSON.stringify({
+      text: textEl.value,
+      lang: language.value
+    })
   });
 
   const blob = await res.blob();
   player.src = URL.createObjectURL(blob);
 }
 
-// ===== Download =====
+// ===== Download
 function download() {
   const a = document.createElement("a");
   a.href = player.src;
