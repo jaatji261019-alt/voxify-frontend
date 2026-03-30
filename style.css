@@ -1,26 +1,32 @@
 body {
-      background: #0f172a;
-        color: white;
-          font-family: sans-serif;
-            text-align: center;
-            }
+  background: #0f172a;
+  color: white;
+  font-family: sans-serif;
+  text-align: center;
+}
 
-            textarea {
-              width: 90%;
-                height: 150px;
-                  margin: 20px 0;
-                    padding: 10px;
-                    }
+.container {
+  padding: 20px;
+}
 
-                    button {
-                      padding: 10px 15px;
-                        margin: 5px;
-                          border: none;
-                            border-radius: 5px;
-                              cursor: pointer;
-                              }
+textarea {
+  width: 90%;
+  height: 150px;
+  margin: 20px 0;
+}
 
-                              .controls {
-                                margin-bottom: 20px;
-                                }
+select {
+  margin: 10px;
+  padding: 5px;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+audio {
+  margin-top: 20px;
+  width: 90%;
 }
