@@ -2,20 +2,6 @@ const textEl = document.getElementById("text");
 const player = document.getElementById("player");
 const language = document.getElementById("language");
 const voiceSelect = document.getElementById("voiceSelect");
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  voiceSelect.innerHTML = "";
-
-  voices.forEach((voice, index) => {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = `${voice.name} (${voice.lang})`;
-    voiceSelect.appendChild(option);
-  });
-}
-
-speechSynthesis.onvoiceschanged = loadVoices;
-window.onload = loadVoices;
 // ===== Load voices =====
 function loadVoices() {
   const voices = speechSynthesis.getVoices();
@@ -44,8 +30,41 @@ function loadVoices() {
 speechSynthesis.onvoiceschanged = loadVoices;
 
 // ✅ ADD THESE (fix)
-loadVoices();
-setTimeout(loadVoices, 1000);
+const voiceSelect = document.getElementById("voiceSelect");
+
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+
+  if (!voices.length) return;
+
+  voiceSelect.innerHTML = "";
+
+  voices.forEach((voice, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = `${voice.name} (${voice.lang})`;
+    voiceSelect.appendChild(option);
+  });
+}
+
+function initVoices() {
+  let count = 0;
+
+  const interval = setInterval(() => {
+    const voices = speechSynthesis.getVoices();
+
+    if (voices.length !== 0 || count > 10) {
+      loadVoices();
+      clearInterval(interval);
+    }
+
+    count++;
+  }, 500);
+}
+
+// 🔥 IMPORTANT
+speechSynthesis.onvoiceschanged = loadVoices;
+initVoices();
 
 // ===== Preview =====
 function preview() {
