@@ -1,111 +1,61 @@
-const textEl = document.getElementById("text");
-const player = document.getElementById("player");
-const language = document.getElementById("language");
-const voiceSelect = document.getElementById("voiceSelect");
-// ===== Load voices =====
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  voiceSelect.innerHTML = "";
-
-  voices.forEach((voice, index) => {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = `${voice.name} (${voice.lang})`;
-    voiceSelect.appendChild(option);
-  });
-}
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  voiceSelect.innerHTML = "";
-
-  voices.forEach((voice, index) => {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = `${voice.name} (${voice.lang})`;
-    voiceSelect.appendChild(option);
-  });
-}
-
-// ✅ KEEP THIS
-speechSynthesis.onvoiceschanged = loadVoices;
-
-// ✅ ADD THESE (fix)
+const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
 
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
+let voices = [];
 
-  if (!voices.length) return;
+// 🔥 Load voices properly
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
 
   voiceSelect.innerHTML = "";
 
-  voices.forEach((voice, index) => {
+  voices.forEach((voice, i) => {
     const option = document.createElement("option");
-    option.value = index;
-    option.textContent = `${voice.name} (${voice.lang})`;
+    option.value = i;
+    option.textContent = voice.name + " (" + voice.lang + ")";
     voiceSelect.appendChild(option);
   });
 }
 
+// 🔥 FIX for mobile delay
 function initVoices() {
-  let count = 0;
-
-  const interval = setInterval(() => {
-    const voices = speechSynthesis.getVoices();
-
-    if (voices.length !== 0 || count > 10) {
+  let interval = setInterval(() => {
+    voices = speechSynthesis.getVoices();
+    if (voices.length > 0) {
       loadVoices();
       clearInterval(interval);
     }
-
-    count++;
   }, 500);
 }
 
-// 🔥 IMPORTANT
+// 🔥 MAIN SPEAK FUNCTION
+function preview() {
+  if (!textInput.value) {
+    alert("Enter text!");
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(textInput.value);
+
+  const selectedVoice = voices[voiceSelect.value];
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+    utterance.lang = selectedVoice.lang;
+  }
+
+  speechSynthesis.cancel(); // stop previous
+  speechSynthesis.speak(utterance);
+}
+
+// dummy (abhi baad me improve karenge)
+function generate() {
+  preview();
+}
+
+function download() {
+  alert("Download feature coming soon 😎");
+}
+
+// 🔥 INIT
 speechSynthesis.onvoiceschanged = loadVoices;
 initVoices();
-
-// ===== Preview =====
-function preview() {
-  const text = textEl.value || "Voice preview";
-
-  const speech = new SpeechSynthesisUtterance(text);
-
-  const voices = speechSynthesis.getVoices();
-  const selectedVoice = voices[voiceSelect.value];
-
-  if (selectedVoice) speech.voice = selectedVoice;
-
-  speech.lang = language.value;
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(speech);
-}
-
-// ===== Generate (backend)
-async function generate() {
-  if (!textEl.value) return alert("Enter text");
-
-  const res = await fetch("https://voxify-ai.onrender.com/tts", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text: textEl.value,
-      lang: language.value
-    })
-  });
-
-  const blob = await res.blob();
-  player.src = URL.createObjectURL(blob);
-}
-
-// ===== Download
-function download() {
-  const a = document.createElement("a");
-  a.href = player.src;
-  a.download = "voxify.mp3";
-  a.click();
-}
