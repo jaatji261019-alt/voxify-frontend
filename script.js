@@ -2,7 +2,20 @@ const textEl = document.getElementById("text");
 const player = document.getElementById("player");
 const language = document.getElementById("language");
 const voiceSelect = document.getElementById("voiceSelect");
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  voiceSelect.innerHTML = "";
 
+  voices.forEach((voice, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = `${voice.name} (${voice.lang})`;
+    voiceSelect.appendChild(option);
+  });
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+window.onload = loadVoices;
 // ===== Load voices =====
 function loadVoices() {
   const voices = speechSynthesis.getVoices();
