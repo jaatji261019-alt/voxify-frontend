@@ -16,8 +16,17 @@ textarea {
 }
 
 select {
-  margin: 10px;
-  padding: 5px;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 6px;
+  border: none;
+  min-width: 140px;
+  font-size: 14px;
+}
+
+/* 🔥 Voice dropdown ko bada karega */
+#voiceSelect {
+  min-width: 220px;
 }
 
 button {
