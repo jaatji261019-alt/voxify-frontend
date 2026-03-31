@@ -39,3 +39,10 @@ audio {
   margin-top: 20px;
   width: 90%;
 }
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
