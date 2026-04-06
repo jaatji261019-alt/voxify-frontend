@@ -8,10 +8,10 @@ let audioURL = "";
 
 // 🔥 Load voices
 function loadVoices() {
-  voices = speechSynthesis.getVoices();
+  const availableVoices = speechSynthesis.getVoices();
+  if (!availableVoices.length) return;
 
-  if (!voices.length) return;
-
+  voices = availableVoices;
   voiceSelect.innerHTML = "";
 
   voices.forEach((voice, i) => {
@@ -24,23 +24,23 @@ function loadVoices() {
 
 // 🔥 Fix mobile delay
 function initVoices() {
-  let count = 0;
+  let attempts = 0;
 
   const interval = setInterval(() => {
-    voices = speechSynthesis.getVoices();
+    const availableVoices = speechSynthesis.getVoices();
 
-    if (voices.length > 0 || count > 10) {
+    if (availableVoices.length > 0 || attempts > 10) {
       loadVoices();
       clearInterval(interval);
     }
 
-    count++;
+    attempts++;
   }, 500);
 }
 
-// 🔊 Preview (browser voice)
+// 🔊 PREVIEW (browser voice)
 function preview() {
-  if (!textInput.value) {
+  if (!textInput.value.trim()) {
     alert("Enter text!");
     return;
   }
@@ -48,6 +48,7 @@ function preview() {
   const utterance = new SpeechSynthesisUtterance(textInput.value);
 
   const selectedVoice = voices[voiceSelect.value];
+
   if (selectedVoice) {
     utterance.voice = selectedVoice;
     utterance.lang = selectedVoice.lang;
@@ -55,13 +56,18 @@ function preview() {
     utterance.lang = languageSelect.value;
   }
 
-  speechSynthesis.cancel();
+  speechSynthesis.cancel(); // stop previous
   speechSynthesis.speak(utterance);
 }
 
-// 🎧 Generate real MP3 from backend
+// ⏹ STOP PREVIEW (🔥 NEW)
+function stopPreview() {
+  speechSynthesis.cancel();
+}
+
+// 🎧 GENERATE (backend MP3)
 async function generate() {
-  if (!textInput.value) {
+  if (!textInput.value.trim()) {
     alert("Enter text!");
     return;
   }
@@ -92,7 +98,7 @@ async function generate() {
   }
 }
 
-// 📥 Download MP3
+// 📥 DOWNLOAD
 function download() {
   if (!audioURL) {
     alert("Generate audio first!");
@@ -105,11 +111,7 @@ function download() {
   a.click();
 }
 
-// 🔥 INIT
-speechSynthesis.onvoiceschanged = loadVoices;
-initVoices();
-
-// 🔊 AUDIO CONTROLS
+// 🎛 AUDIO CONTROLS (for generated audio)
 
 function playAudio() {
   if (!player.src) {
@@ -127,3 +129,7 @@ function stopAudio() {
   player.pause();
   player.currentTime = 0;
 }
+
+// 🔥 INIT
+speechSynthesis.onvoiceschanged = loadVoices;
+initVoices();
