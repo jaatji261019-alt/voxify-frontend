@@ -108,3 +108,22 @@ function download() {
 // 🔥 INIT
 speechSynthesis.onvoiceschanged = loadVoices;
 initVoices();
+
+// 🔊 AUDIO CONTROLS
+
+function playAudio() {
+  if (!player.src) {
+    alert("Generate audio first!");
+    return;
+  }
+  player.play();
+}
+
+function pauseAudio() {
+  player.pause();
+}
+
+function stopAudio() {
+  player.pause();
+  player.currentTime = 0;
+}
