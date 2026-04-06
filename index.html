@@ -10,7 +10,7 @@
 <body>
 
   <div class="container">
-    
+
     <h1>🎙 Voxify AI (Free)</h1>
 
     <textarea id="text" placeholder="Enter text here..."></textarea>
@@ -32,17 +32,24 @@
       <select id="voiceSelect"></select>
     </div>
 
+    <!-- 🔥 UPDATED BUTTONS -->
     <div class="buttons">
       <button onclick="preview()">▶ Preview</button>
       <button onclick="generate()">⚡ Generate</button>
+
+      <!-- AUDIO CONTROLS -->
+      <button onclick="playAudio()">▶ Play</button>
+      <button onclick="pauseAudio()">⏸ Pause</button>
+      <button onclick="stopAudio()">⏹ Stop</button>
+
       <button onclick="download()">⬇ Download</button>
     </div>
 
     <audio id="player" controls></audio>
 
   </div>
-  
-<script src="script.js"></script>
-  
+
+  <script src="script.js"></script>
+
 </body>
 </html>
