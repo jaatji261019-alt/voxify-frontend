@@ -1,82 +1,133 @@
-body {
+/* 🔥 Reset */
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 🌈 Background */
+body {
   font-family: 'Poppins', sans-serif;
   background: linear-gradient(135deg, #1e1e2f, #3a3a5f);
   color: white;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
 }
 
-/* 🔥 Glass container */
+/* 💎 Glass Container */
 .container {
-  backdrop-filter: blur(15px);
-  background: rgba(255, 255, 255, 0.08);
-  padding: 25px;
-  border-radius: 20px;
   width: 95%;
   max-width: 500px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.4);
+  padding: 25px;
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
   text-align: center;
 }
 
+/* 🏷 Heading */
 h1 {
   margin-bottom: 15px;
+  font-size: 22px;
 }
 
-/* 🔥 textarea */
+/* 📝 Textarea */
 textarea {
   width: 100%;
   height: 120px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 12px;
   border: none;
-  padding: 10px;
+  outline: none;
   resize: none;
   font-size: 14px;
   margin-bottom: 15px;
 }
 
-/* 🔥 dropdowns */
+/* 🎛 Controls (dropdowns) */
 .controls {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
+  flex-wrap: wrap;
 }
 
+/* 🔽 Select dropdown */
 select {
   flex: 1;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
+  outline: none;
+  font-size: 14px;
+  min-width: 120px;
 }
 
-/* 🔥 buttons */
+/* 🔘 Buttons container */
 .buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;                /* 🔥 proper spacing */
   justify-content: center;
+  margin-top: 10px;
 }
 
+/* 🔘 Individual button */
 button {
-  padding: 10px 15px;
+  padding: 10px 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
+
   background: linear-gradient(45deg, #ff7a18, #ffb347);
   color: white;
+  font-size: 14px;
   cursor: pointer;
-  transition: 0.3s;
+
+  transition: all 0.3s ease;
+  min-width: 100px;
 }
 
+/* ✨ Hover effect */
 button:hover {
   transform: scale(1.05);
   opacity: 0.9;
+  box-shadow: 0 0 10px rgba(255, 183, 71, 0.6);
 }
 
-/* 🔥 audio player */
+/* 🧠 Active click feel */
+button:active {
+  transform: scale(0.95);
+}
+
+/* 🎧 Audio player */
 audio {
   width: 100%;
   margin-top: 15px;
   border-radius: 10px;
+}
+
+/* 🔥 Section spacing */
+.buttons + .buttons {
+  margin-top: 15px;
+}
+
+/* 📱 Mobile responsive */
+@media (max-width: 480px) {
+  .container {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 18px;
+  }
+
+  button {
+    flex: 1;
+    min-width: 45%;
+  }
 }
