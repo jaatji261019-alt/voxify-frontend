@@ -131,3 +131,23 @@ audio {
     min-width: 45%;
   }
 }
+
+/* 🌞 Light Mode */
+body.light {
+  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+  color: #111;
+}
+
+body.light .container {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body.light textarea,
+body.light select {
+  background: white;
+  color: black;
+}
+
+body.light button {
+  background: linear-gradient(45deg, #007bff, #00c6ff);
+}
