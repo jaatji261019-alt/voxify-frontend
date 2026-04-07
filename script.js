@@ -1,3 +1,5 @@
+const loader = document.getElementById("loader");
+
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
 const languageSelect = document.getElementById("language");
