@@ -74,6 +74,8 @@ async function generate() {
     return;
   }
 
+  loader.style.display = "block"; // 🔥 show loader
+
   try {
     const res = await fetch("https://voxify-ai.onrender.com/tts", {
       method: "POST",
@@ -98,6 +100,8 @@ async function generate() {
     console.error(err);
     alert("Error generating audio");
   }
+
+  loader.style.display = "none"; // 🔥 hide loader
 }
 
 // 📥 DOWNLOAD
