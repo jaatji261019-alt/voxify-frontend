@@ -133,3 +133,16 @@ function stopAudio() {
 // 🔥 INIT
 speechSynthesis.onvoiceschanged = loadVoices;
 initVoices();
+
+const themeToggle = document.getElementById("themeToggle");
+
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("light");
+
+  if (document.body.classList.contains("light")) {
+    themeToggle.textContent = "☀️ Light Mode";
+  } else {
+    themeToggle.textContent = "🌙 Dark Mode";
+  }
+});
+
