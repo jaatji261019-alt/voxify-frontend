@@ -151,3 +151,8 @@ body.light select {
 body.light button {
   background: linear-gradient(45deg, #007bff, #00c6ff);
 }
+#loader {
+  margin-top: 10px;
+  font-size: 14px;
+  opacity: 0.8;
+}
