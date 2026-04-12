@@ -151,4 +151,34 @@ themeToggle.addEventListener("click", () => {
     themeToggle.textContent = "🌙 Dark Mode";
   }
 });
+async function uploadPDF() {
+  const fileInput = document.getElementById("pdfFile");
+  const file = fileInput.files[0];
 
+  if (!file) {
+    alert("Select a PDF file!");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("pdf", file);
+
+  try {
+    const res = await fetch("https://voxify-ai.onrender.com/upload-pdf", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (data.text) {
+      document.getElementById("text").value = data.text;
+    } else {
+      alert("Error reading PDF");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Upload failed");
+  }
+}
