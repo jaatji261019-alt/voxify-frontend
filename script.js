@@ -193,3 +193,38 @@ async function uploadPDF() {
 // 🔥 INIT
 speechSynthesis.onvoiceschanged = loadVoices;
 initVoices();
+async function uploadFile() {
+  const fileInput = document.getElementById("fileUpload");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Select a file!");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (data.text) {
+      textInput.value = data.text;
+
+      // 🔥 AUTO GENERATE
+      setTimeout(() => generate(), 300);
+
+    } else {
+      alert("Error reading file");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Upload failed");
+  }
+}
