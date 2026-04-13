@@ -48,7 +48,6 @@ function preview() {
   }
 
   const utterance = new SpeechSynthesisUtterance(textInput.value);
-
   const selectedVoice = voices[voiceSelect.value];
 
   if (selectedVoice) {
@@ -58,11 +57,11 @@ function preview() {
     utterance.lang = languageSelect.value;
   }
 
-  speechSynthesis.cancel(); // stop previous
+  speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
 }
 
-// ⏹ STOP PREVIEW (🔥 NEW)
+// ⏹ STOP PREVIEW
 function stopPreview() {
   speechSynthesis.cancel();
 }
@@ -74,7 +73,7 @@ async function generate() {
     return;
   }
 
-  loader.style.display = "block"; // 🔥 show loader
+  loader.style.display = "block";
 
   try {
     const res = await fetch("https://voxify-ai.onrender.com/tts", {
@@ -101,7 +100,7 @@ async function generate() {
     alert("Error generating audio");
   }
 
-  loader.style.display = "none"; // 🔥 hide loader
+  loader.style.display = "none";
 }
 
 // 📥 DOWNLOAD
@@ -117,8 +116,7 @@ function download() {
   a.click();
 }
 
-// 🎛 AUDIO CONTROLS (for generated audio)
-
+// 🎛 AUDIO CONTROLS
 function playAudio() {
   if (!player.src) {
     alert("Generate audio first!");
@@ -136,10 +134,7 @@ function stopAudio() {
   player.currentTime = 0;
 }
 
-// 🔥 INIT
-speechSynthesis.onvoiceschanged = loadVoices;
-initVoices();
-
+// 🌗 THEME TOGGLE
 const themeToggle = document.getElementById("themeToggle");
 
 themeToggle.addEventListener("click", () => {
@@ -151,6 +146,8 @@ themeToggle.addEventListener("click", () => {
     themeToggle.textContent = "🌙 Dark Mode";
   }
 });
+
+// 📄 PDF UPLOAD + AUTO GENERATE 🔥
 async function uploadPDF() {
   const fileInput = document.getElementById("pdfFile");
   const file = fileInput.files[0];
@@ -163,6 +160,8 @@ async function uploadPDF() {
   const formData = new FormData();
   formData.append("pdf", file);
 
+  loader.style.display = "block";
+
   try {
     const res = await fetch("https://voxify-ai.onrender.com/upload-pdf", {
       method: "POST",
@@ -172,7 +171,13 @@ async function uploadPDF() {
     const data = await res.json();
 
     if (data.text) {
-      document.getElementById("text").value = data.text;
+      textInput.value = data.text;
+
+      // 🔥 AUTO GENERATE
+      setTimeout(() => {
+        generate();
+      }, 300);
+
     } else {
       alert("Error reading PDF");
     }
@@ -181,4 +186,10 @@ async function uploadPDF() {
     console.error(err);
     alert("Upload failed");
   }
+
+  loader.style.display = "none";
 }
+
+// 🔥 INIT
+speechSynthesis.onvoiceschanged = loadVoices;
+initVoices();
