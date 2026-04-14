@@ -5,20 +5,21 @@ const languageSelect = document.getElementById("language");
 const player = document.getElementById("player");
 
 let voices = [];
-let audioURL = "";
+let audioURLs = []; // 🔥 multiple chunks
+let currentIndex = 0;
 
 // 🌍 AUTO LANGUAGE DETECT
 function detectLanguage(text) {
-  if (/[\u0900-\u097F]/.test(text)) return "hi"; // Hindi
-  if (/[\u0600-\u06FF]/.test(text)) return "ar"; // Arabic
-  if (/[\u4E00-\u9FFF]/.test(text)) return "zh-cn"; // Chinese
-  if (/[\u3040-\u30FF]/.test(text)) return "ja"; // Japanese
-  if (/[\uAC00-\uD7AF]/.test(text)) return "ko"; // Korean
-  if (/[\u0400-\u04FF]/.test(text)) return "ru"; // Russian
-  if (/[\u0E00-\u0E7F]/.test(text)) return "th"; // Thai
-  if (/[\u0370-\u03FF]/.test(text)) return "el"; // Greek
-  if (/[\u0590-\u05FF]/.test(text)) return "he"; // Hebrew
-  return "en"; // default
+  if (/[\u0900-\u097F]/.test(text)) return "hi";
+  if (/[\u0600-\u06FF]/.test(text)) return "ar";
+  if (/[\u4E00-\u9FFF]/.test(text)) return "zh-cn";
+  if (/[\u3040-\u30FF]/.test(text)) return "ja";
+  if (/[\uAC00-\uD7AF]/.test(text)) return "ko";
+  if (/[\u0400-\u04FF]/.test(text)) return "ru";
+  if (/[\u0E00-\u0E7F]/.test(text)) return "th";
+  if (/[\u0370-\u03FF]/.test(text)) return "el";
+  if (/[\u0590-\u05FF]/.test(text)) return "he";
+  return "en";
 }
 
 // 🔥 Load voices
@@ -63,12 +64,11 @@ function preview() {
   const utterance = new SpeechSynthesisUtterance(textInput.value);
   const selectedVoice = voices[voiceSelect.value];
 
-  if (selectedVoice) {
-    utterance.voice = selectedVoice;
-    utterance.lang = selectedVoice.lang;
-  } else {
-    utterance.lang = detectLanguage(textInput.value);
-  }
+  utterance.lang = selectedVoice
+    ? selectedVoice.lang
+    : detectLanguage(textInput.value);
+
+  if (selectedVoice) utterance.voice = selectedVoice;
 
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
@@ -79,7 +79,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE (AUTO LANGUAGE)
+// 🎧 GENERATE (GOOGLE TTS MULTI-CHUNK)
 async function generate() {
   if (!textInput.value.trim()) {
     alert("Enter text!");
@@ -87,7 +87,6 @@ async function generate() {
   }
 
   loader.style.display = "block";
-
   const detectedLang = detectLanguage(textInput.value);
 
   try {
@@ -102,13 +101,28 @@ async function generate() {
       })
     });
 
-    if (!res.ok) throw new Error("Server error");
+    const data = await res.json();
 
-    const blob = await res.blob();
-    audioURL = URL.createObjectURL(blob);
+    audioURLs = data.urls || [];
+    currentIndex = 0;
 
-    player.src = audioURL;
+    if (!audioURLs.length) {
+      alert("No audio generated");
+      return;
+    }
+
+    // 🔥 play first
+    player.src = audioURLs[currentIndex];
     player.play();
+
+    // 🔥 auto next
+    player.onended = () => {
+      currentIndex++;
+      if (currentIndex < audioURLs.length) {
+        player.src = audioURLs[currentIndex];
+        player.play();
+      }
+    };
 
   } catch (err) {
     console.error(err);
@@ -118,15 +132,15 @@ async function generate() {
   loader.style.display = "none";
 }
 
-// 📥 DOWNLOAD
+// 📥 DOWNLOAD (first chunk only for now)
 function download() {
-  if (!audioURL) {
+  if (!audioURLs.length) {
     alert("Generate audio first!");
     return;
   }
 
   const a = document.createElement("a");
-  a.href = audioURL;
+  a.href = audioURLs[0];
   a.download = "voxify.mp3";
   a.click();
 }
@@ -156,7 +170,7 @@ themeToggle.addEventListener("click", () => {
     : "🌙 Dark Mode";
 });
 
-// 📄 FILE UPLOAD (AUTO TEXT + AUTO AUDIO)
+// 📄 FILE UPLOAD
 async function uploadFile() {
   const fileInput = document.getElementById("fileInput");
   const file = fileInput.files[0];
@@ -185,7 +199,7 @@ async function uploadFile() {
 
     textInput.value = cleanedText;
 
-    generate(); // 🔥 auto audio
+    generate(); // 🔥 auto
 
   } catch (err) {
     console.error(err);
