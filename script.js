@@ -1,5 +1,4 @@
 const loader = document.getElementById("loader");
-
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
 const languageSelect = document.getElementById("language");
@@ -7,6 +6,20 @@ const player = document.getElementById("player");
 
 let voices = [];
 let audioURL = "";
+
+// 🌍 AUTO LANGUAGE DETECT
+function detectLanguage(text) {
+  if (/[\u0900-\u097F]/.test(text)) return "hi"; // Hindi
+  if (/[\u0600-\u06FF]/.test(text)) return "ar"; // Arabic
+  if (/[\u4E00-\u9FFF]/.test(text)) return "zh-cn"; // Chinese
+  if (/[\u3040-\u30FF]/.test(text)) return "ja"; // Japanese
+  if (/[\uAC00-\uD7AF]/.test(text)) return "ko"; // Korean
+  if (/[\u0400-\u04FF]/.test(text)) return "ru"; // Russian
+  if (/[\u0E00-\u0E7F]/.test(text)) return "th"; // Thai
+  if (/[\u0370-\u03FF]/.test(text)) return "el"; // Greek
+  if (/[\u0590-\u05FF]/.test(text)) return "he"; // Hebrew
+  return "en"; // default
+}
 
 // 🔥 Load voices
 function loadVoices() {
@@ -40,7 +53,7 @@ function initVoices() {
   }, 500);
 }
 
-// 🔊 PREVIEW (browser voice)
+// 🔊 PREVIEW
 function preview() {
   if (!textInput.value.trim()) {
     alert("Enter text!");
@@ -54,7 +67,7 @@ function preview() {
     utterance.voice = selectedVoice;
     utterance.lang = selectedVoice.lang;
   } else {
-    utterance.lang = languageSelect.value;
+    utterance.lang = detectLanguage(textInput.value);
   }
 
   speechSynthesis.cancel();
@@ -66,7 +79,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE (backend MP3)
+// 🎧 GENERATE (AUTO LANGUAGE)
 async function generate() {
   if (!textInput.value.trim()) {
     alert("Enter text!");
@@ -74,6 +87,8 @@ async function generate() {
   }
 
   loader.style.display = "block";
+
+  const detectedLang = detectLanguage(textInput.value);
 
   try {
     const res = await fetch("https://voxify-ai.onrender.com/tts", {
@@ -83,7 +98,7 @@ async function generate() {
       },
       body: JSON.stringify({
         text: textInput.value,
-        lang: languageSelect.value
+        lang: detectedLang
       })
     });
 
@@ -118,10 +133,6 @@ function download() {
 
 // 🎛 AUDIO CONTROLS
 function playAudio() {
-  if (!player.src) {
-    alert("Generate audio first!");
-    return;
-  }
   player.play();
 }
 
@@ -140,47 +151,41 @@ const themeToggle = document.getElementById("themeToggle");
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("light");
 
-  if (document.body.classList.contains("light")) {
-    themeToggle.textContent = "☀️ Light Mode";
-  } else {
-    themeToggle.textContent = "🌙 Dark Mode";
-  }
+  themeToggle.textContent = document.body.classList.contains("light")
+    ? "☀️ Light Mode"
+    : "🌙 Dark Mode";
 });
 
-// 📄 PDF UPLOAD + AUTO GENERATE 🔥
-async function uploadPDF() {
-  const fileInput = document.getElementById("pdfFile");
+// 📄 FILE UPLOAD (AUTO TEXT + AUTO AUDIO)
+async function uploadFile() {
+  const fileInput = document.getElementById("fileInput");
   const file = fileInput.files[0];
 
-  if (!file) {
-    alert("Select a PDF file!");
-    return;
-  }
+  if (!file) return;
+
+  document.getElementById("fileType").innerText = "File: " + file.name;
 
   const formData = new FormData();
-  formData.append("pdf", file);
+  formData.append("file", file);
 
   loader.style.display = "block";
 
   try {
-    const res = await fetch("https://voxify-ai.onrender.com/upload-pdf", {
+    const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
       method: "POST",
       body: formData
     });
 
     const data = await res.json();
 
-    if (data.text) {
-      textInput.value = data.text;
+    const cleanedText = data.text
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
-      // 🔥 AUTO GENERATE
-      setTimeout(() => {
-        generate();
-      }, 300);
+    textInput.value = cleanedText;
 
-    } else {
-      alert("Error reading PDF");
-    }
+    generate(); // 🔥 auto audio
 
   } catch (err) {
     console.error(err);
@@ -193,76 +198,3 @@ async function uploadPDF() {
 // 🔥 INIT
 speechSynthesis.onvoiceschanged = loadVoices;
 initVoices();
-async function uploadFile() {
-  const fileInput = document.getElementById("fileUpload");
-  const file = fileInput.files[0];
-
-  if (!file) {
-    alert("Select a file!");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-
-    if (data.text) {
-      textInput.value = data.text;
-
-      // 🔥 AUTO GENERATE
-      setTimeout(() => generate(), 300);
-
-    } else {
-      alert("Error reading file");
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert("Upload failed");
-  }
-}
-// 🟢 FRONTEND - Upload File Auto
-async function uploadFile() {
-  const fileInput = document.getElementById("fileInput");
-  const file = fileInput.files[0];
-
-  if (!file) return;
-
-  // show file name
-  document.getElementById("fileType").innerText = "File: " + file.name;
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-
-    // clean text
-    const cleanedText = data.text
-      .replace(/\n/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    // put into textarea
-    document.getElementById("text").value = cleanedText;
-
-    // 🔥 AUTO GENERATE AUDIO
-    generate();
-
-  } catch (err) {
-    console.error(err);
-    alert("File upload error");
-  }
-}
