@@ -228,3 +228,41 @@ async function uploadFile() {
     alert("Upload failed");
   }
 }
+// 🟢 FRONTEND - Upload File Auto
+async function uploadFile() {
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
+
+  if (!file) return;
+
+  // show file name
+  document.getElementById("fileType").innerText = "File: " + file.name;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    // clean text
+    const cleanedText = data.text
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // put into textarea
+    document.getElementById("text").value = cleanedText;
+
+    // 🔥 AUTO GENERATE AUDIO
+    generate();
+
+  } catch (err) {
+    console.error(err);
+    alert("File upload error");
+  }
+}
