@@ -5,7 +5,7 @@ const languageSelect = document.getElementById("language");
 const player = document.getElementById("player");
 
 let voices = [];
-let audioURLs = []; // 🔥 multiple chunks
+let audioURLs = [];
 let currentIndex = 0;
 
 // 🌍 AUTO LANGUAGE DETECT
@@ -38,7 +38,7 @@ function loadVoices() {
   });
 }
 
-// 🔥 Fix mobile delay
+// 🔥 INIT voices
 function initVoices() {
   let attempts = 0;
 
@@ -79,7 +79,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE (GOOGLE TTS MULTI-CHUNK)
+// 🎧 GENERATE (FIXED)
 async function generate() {
   if (!textInput.value.trim()) {
     alert("Enter text!");
@@ -87,9 +87,10 @@ async function generate() {
   }
 
   loader.style.display = "block";
-  const detectedLang = detectLanguage(textInput.value);
 
   try {
+    const detectedLang = detectLanguage(textInput.value);
+
     const res = await fetch("https://voxify-ai.onrender.com/tts", {
       method: "POST",
       headers: {
@@ -101,21 +102,31 @@ async function generate() {
       })
     });
 
-    const data = await res.json();
-
-    audioURLs = data.urls || [];
-    currentIndex = 0;
-
-    if (!audioURLs.length) {
-      alert("No audio generated");
-      return;
+    // ❌ if backend error
+    if (!res.ok) {
+      throw new Error("Server not responding");
     }
 
-    // 🔥 play first
-    player.src = audioURLs[currentIndex];
-    player.play();
+    const data = await res.json();
 
-    // 🔥 auto next
+    console.log("TTS Response:", data); // 🔥 DEBUG
+
+    // ❌ if no URLs
+    if (!data.urls || data.urls.length === 0) {
+      throw new Error("No audio URLs received");
+    }
+
+    audioURLs = data.urls;
+    currentIndex = 0;
+
+    // 🔥 PLAY FIRST
+    player.src = audioURLs[currentIndex];
+
+    await player.play().catch(() => {
+      alert("Tap play button manually (browser restriction)");
+    });
+
+    // 🔥 AUTO NEXT
     player.onended = () => {
       currentIndex++;
       if (currentIndex < audioURLs.length) {
@@ -125,14 +136,14 @@ async function generate() {
     };
 
   } catch (err) {
-    console.error(err);
-    alert("Error generating audio");
+    console.error("TTS ERROR:", err);
+    alert("Audio generate failed ❌");
   }
 
   loader.style.display = "none";
 }
 
-// 📥 DOWNLOAD (first chunk only for now)
+// 📥 DOWNLOAD
 function download() {
   if (!audioURLs.length) {
     alert("Generate audio first!");
@@ -159,12 +170,11 @@ function stopAudio() {
   player.currentTime = 0;
 }
 
-// 🌗 THEME TOGGLE
+// 🌗 THEME
 const themeToggle = document.getElementById("themeToggle");
 
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("light");
-
   themeToggle.textContent = document.body.classList.contains("light")
     ? "☀️ Light Mode"
     : "🌙 Dark Mode";
@@ -192,6 +202,8 @@ async function uploadFile() {
 
     const data = await res.json();
 
+    if (!data.text) throw new Error("No text extracted");
+
     const cleanedText = data.text
       .replace(/\n/g, " ")
       .replace(/\s+/g, " ")
@@ -199,7 +211,7 @@ async function uploadFile() {
 
     textInput.value = cleanedText;
 
-    generate(); // 🔥 auto
+    generate();
 
   } catch (err) {
     console.error(err);
