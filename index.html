@@ -15,7 +15,8 @@
     <h1>🎙 Voxify AI (Free)
     <button id="themeToggle">🌙 Dark Mode</button>
     <input type="file" id="fileUpload" accept=".pdf,.docx,.txt">
-<button onclick="uploadFile()">📄 Upload File</button>
+<input type="file" id="fileInput" onchange="uploadFile()">
+<p id="fileType"></p>
     <textarea id="text" placeholder="Enter text here..."></textarea>
 
     <div class="controls">
