@@ -5,8 +5,6 @@ const languageSelect = document.getElementById("language");
 const player = document.getElementById("player");
 
 let voices = [];
-let audioURLs = [];
-let currentIndex = 0;
 
 // 🌍 AUTO LANGUAGE DETECT
 function detectLanguage(text) {
@@ -22,7 +20,7 @@ function detectLanguage(text) {
   return "en";
 }
 
-// 🔥 Load voices
+// 🔥 LOAD VOICES
 function loadVoices() {
   const availableVoices = speechSynthesis.getVoices();
   if (!availableVoices.length) return;
@@ -38,14 +36,14 @@ function loadVoices() {
   });
 }
 
-// 🔥 INIT voices
+// 🔥 INIT VOICES
 function initVoices() {
   let attempts = 0;
 
   const interval = setInterval(() => {
-    const availableVoices = speechSynthesis.getVoices();
+    const v = speechSynthesis.getVoices();
 
-    if (availableVoices.length > 0 || attempts > 10) {
+    if (v.length > 0 || attempts > 10) {
       loadVoices();
       clearInterval(interval);
     }
@@ -79,7 +77,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE (FIXED)
+// 🎧 GENERATE (🔥 FIXED - BLOB METHOD)
 async function generate() {
   if (!textInput.value.trim()) {
     alert("Enter text!");
@@ -102,38 +100,19 @@ async function generate() {
       })
     });
 
-    // ❌ if backend error
     if (!res.ok) {
-      throw new Error("Server not responding");
+      throw new Error("Server error");
     }
 
-    const data = await res.json();
+    // 🔥 IMPORTANT CHANGE (BLOB)
+    const blob = await res.blob();
+    const audioURL = URL.createObjectURL(blob);
 
-    console.log("TTS Response:", data); // 🔥 DEBUG
-
-    // ❌ if no URLs
-    if (!data.urls || data.urls.length === 0) {
-      throw new Error("No audio URLs received");
-    }
-
-    audioURLs = data.urls;
-    currentIndex = 0;
-
-    // 🔥 PLAY FIRST
-    player.src = audioURLs[currentIndex];
+    player.src = audioURL;
 
     await player.play().catch(() => {
-      alert("Tap play button manually (browser restriction)");
+      alert("Tap play button manually");
     });
-
-    // 🔥 AUTO NEXT
-    player.onended = () => {
-      currentIndex++;
-      if (currentIndex < audioURLs.length) {
-        player.src = audioURLs[currentIndex];
-        player.play();
-      }
-    };
 
   } catch (err) {
     console.error("TTS ERROR:", err);
@@ -145,19 +124,20 @@ async function generate() {
 
 // 📥 DOWNLOAD
 function download() {
-  if (!audioURLs.length) {
+  if (!player.src) {
     alert("Generate audio first!");
     return;
   }
 
   const a = document.createElement("a");
-  a.href = audioURLs[0];
+  a.href = player.src;
   a.download = "voxify.mp3";
   a.click();
 }
 
 // 🎛 AUDIO CONTROLS
 function playAudio() {
+  if (!player.src) return alert("Generate audio first!");
   player.play();
 }
 
@@ -211,6 +191,7 @@ async function uploadFile() {
 
     textInput.value = cleanedText;
 
+    // 🔥 AUTO GENERATE
     generate();
 
   } catch (err) {
