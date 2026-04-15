@@ -12,12 +12,20 @@
 
   <div class="container">
 
-    <h1>🎙 Voxify AI (Free)
-    <button id="themeToggle">🌙 Dark Mode</button>
-<input type="file" id="fileInput" onchange="uploadFile()">
-<p id="fileType"></p>
+    <!-- 🔥 HEADER -->
+    <div class="header">
+      <h1>🎙 Voxify AI (Free)</h1>
+      <button id="themeToggle">🌙 Dark Mode</button>
+    </div>
+
+    <!-- 📄 FILE UPLOAD -->
+    <input type="file" id="fileInput" onchange="uploadFile()">
+    <p id="fileType"></p>
+
+    <!-- ✍️ TEXT -->
     <textarea id="text" placeholder="Enter text here..."></textarea>
 
+    <!-- 🎚 CONTROLS -->
     <div class="controls">
       <select id="language">
         <option value="en">English</option>
@@ -35,24 +43,31 @@
       <select id="voiceSelect"></select>
     </div>
 
-    <!-- 🔥 UPDATED BUTTONS -->
+    <!-- 🎮 BUTTONS -->
     <div class="buttons">
       <button onclick="preview()">▶ Preview</button>
-        <button onclick="stopPreview()">⏹ Stop</button>
-    </div>
-    <!-- 🎧 GENERATED AUDIO CONTROLS -->
-<div class="buttons">
+      <button onclick="stopPreview()">⏹ Stop</button>
       <button onclick="generate()">⚡ Generate</button>
+    </div>
 
-      <!-- AUDIO CONTROLS -->
+    <!-- 🎧 AUDIO CONTROLS -->
+    <div class="buttons">
       <button onclick="playAudio()">▶ Play</button>
       <button onclick="pauseAudio()">⏸ Pause</button>
       <button onclick="stopAudio()">⏹ Stop</button>
-
       <button onclick="download()">⬇ Download</button>
     </div>
+
+    <!-- 📊 PROGRESS BAR 🔥 -->
+    <div id="progressContainer">
+      <div id="progressBar"></div>
+    </div>
+    <p id="progressText">0%</p>
+
+    <!-- 🔄 LOADER -->
     <div id="loader" class="loader"></div>
 
+    <!-- 🎧 AUDIO PLAYER -->
     <audio id="player" controls></audio>
 
   </div>
