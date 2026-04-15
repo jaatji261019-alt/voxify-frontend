@@ -1,7 +1,6 @@
 const loader = document.getElementById("loader");
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
-const languageSelect = document.getElementById("language");
 const player = document.getElementById("player");
 
 let voices = [];
@@ -14,18 +13,15 @@ function detectLanguage(text) {
   if (/[\u3040-\u30FF]/.test(text)) return "ja";
   if (/[\uAC00-\uD7AF]/.test(text)) return "ko";
   if (/[\u0400-\u04FF]/.test(text)) return "ru";
-  if (/[\u0E00-\u0E7F]/.test(text)) return "th";
-  if (/[\u0370-\u03FF]/.test(text)) return "el";
-  if (/[\u0590-\u05FF]/.test(text)) return "he";
   return "en";
 }
 
 // 🔥 LOAD VOICES
 function loadVoices() {
-  const availableVoices = speechSynthesis.getVoices();
-  if (!availableVoices.length) return;
+  const v = speechSynthesis.getVoices();
+  if (!v.length) return;
 
-  voices = availableVoices;
+  voices = v;
   voiceSelect.innerHTML = "";
 
   voices.forEach((voice, i) => {
@@ -41,93 +37,95 @@ function initVoices() {
   let attempts = 0;
 
   const interval = setInterval(() => {
-    const v = speechSynthesis.getVoices();
-
-    if (v.length > 0 || attempts > 10) {
+    if (speechSynthesis.getVoices().length || attempts > 10) {
       loadVoices();
       clearInterval(interval);
     }
-
     attempts++;
   }, 500);
 }
 
 // 🔊 PREVIEW
 function preview() {
-  if (!textInput.value.trim()) {
-    alert("Enter text!");
-    return;
-  }
+  if (!textInput.value.trim()) return alert("Enter text!");
 
   const utterance = new SpeechSynthesisUtterance(textInput.value);
   const selectedVoice = voices[voiceSelect.value];
 
-  utterance.lang = selectedVoice
-    ? selectedVoice.lang
-    : detectLanguage(textInput.value);
-
-  if (selectedVoice) utterance.voice = selectedVoice;
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+    utterance.lang = selectedVoice.lang;
+  } else {
+    utterance.lang = detectLanguage(textInput.value);
+  }
 
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
 }
 
-// ⏹ STOP PREVIEW
 function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE (🔥 FIXED - BLOB METHOD)
+// 🎧 GENERATE WITH PROGRESS 🔥
 async function generate() {
-  if (!textInput.value.trim()) {
-    alert("Enter text!");
-    return;
-  }
+  if (!textInput.value.trim()) return alert("Enter text!");
 
-  loader.style.display = "block";
+  const progressBar = document.getElementById("progressBar");
+  const progressText = document.getElementById("progressText");
 
-  try {
-    const detectedLang = detectLanguage(textInput.value);
+  progressBar.style.width = "0%";
+  progressText.innerText = "0%";
 
-    const res = await fetch("https://voxify-ai.onrender.com/tts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: textInput.value,
-        lang: detectedLang
-      })
-    });
+  // 🔥 START PROGRESS STREAM
+  const source = new EventSource(
+    `https://voxify-ai.onrender.com/tts-progress?text=${encodeURIComponent(textInput.value)}`
+  );
 
-    if (!res.ok) {
-      throw new Error("Server error");
+  source.onmessage = async (event) => {
+    if (event.data === "done") {
+      source.close();
+
+      progressText.innerText = "Generating audio...";
+
+      try {
+        const res = await fetch("https://voxify-ai.onrender.com/tts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            text: textInput.value,
+            lang: detectLanguage(textInput.value)
+          })
+        });
+
+        const blob = await res.blob();
+        const audioURL = URL.createObjectURL(blob);
+
+        player.src = audioURL;
+        await player.play().catch(() => {});
+
+        progressBar.style.width = "100%";
+        progressText.innerText = "Done ✅";
+
+      } catch (err) {
+        console.error(err);
+        alert("Audio failed ❌");
+      }
+
+      return;
     }
 
-    // 🔥 IMPORTANT CHANGE (BLOB)
-    const blob = await res.blob();
-    const audioURL = URL.createObjectURL(blob);
-
-    player.src = audioURL;
-
-    await player.play().catch(() => {
-      alert("Tap play button manually");
-    });
-
-  } catch (err) {
-    console.error("TTS ERROR:", err);
-    alert("Audio generate failed ❌");
-  }
-
-  loader.style.display = "none";
+    const percent = event.data;
+    progressBar.style.width = percent + "%";
+    progressText.innerText = percent + "%";
+  };
 }
 
 // 📥 DOWNLOAD
 function download() {
-  if (!player.src) {
-    alert("Generate audio first!");
-    return;
-  }
+  if (!player.src) return alert("Generate audio first!");
 
   const a = document.createElement("a");
   a.href = player.src;
@@ -151,20 +149,13 @@ function stopAudio() {
 }
 
 // 🌗 THEME
-const themeToggle = document.getElementById("themeToggle");
-
-themeToggle.addEventListener("click", () => {
+document.getElementById("themeToggle").addEventListener("click", () => {
   document.body.classList.toggle("light");
-  themeToggle.textContent = document.body.classList.contains("light")
-    ? "☀️ Light Mode"
-    : "🌙 Dark Mode";
 });
 
 // 📄 FILE UPLOAD
 async function uploadFile() {
-  const fileInput = document.getElementById("fileInput");
-  const file = fileInput.files[0];
-
+  const file = document.getElementById("fileInput").files[0];
   if (!file) return;
 
   document.getElementById("fileType").innerText = "File: " + file.name;
@@ -182,8 +173,6 @@ async function uploadFile() {
 
     const data = await res.json();
 
-    if (!data.text) throw new Error("No text extracted");
-
     const cleanedText = data.text
       .replace(/\n/g, " ")
       .replace(/\s+/g, " ")
@@ -191,8 +180,7 @@ async function uploadFile() {
 
     textInput.value = cleanedText;
 
-    // 🔥 AUTO GENERATE
-    generate();
+    generate(); // 🔥 AUTO START
 
   } catch (err) {
     console.error(err);
