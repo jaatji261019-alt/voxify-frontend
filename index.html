@@ -58,7 +58,12 @@
       <button onclick="download()">⬇ Download</button>
     </div>
 
-    <!-- 📊 PROGRESS BAR 🔥 -->
+    <!-- 🎬 VIDEO GENERATOR 🔥 -->
+    <div class="buttons">
+      <button onclick="createVideo()">🎬 Create Video</button>
+    </div>
+
+    <!-- 📊 PROGRESS BAR -->
     <div id="progressContainer">
       <div id="progressBar"></div>
     </div>
@@ -69,6 +74,9 @@
 
     <!-- 🎧 AUDIO PLAYER -->
     <audio id="player" controls></audio>
+
+    <!-- 🎬 VIDEO CANVAS (HIDDEN) -->
+    <canvas id="videoCanvas" width="720" height="1280" style="display:none;"></canvas>
 
   </div>
 
