@@ -67,7 +67,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE WITH PROGRESS 🔥
+// 🎧 GENERATE WITH PROGRESS
 async function generate() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -77,50 +77,56 @@ async function generate() {
   progressBar.style.width = "0%";
   progressText.innerText = "0%";
 
-  // 🔥 START PROGRESS STREAM
-  const source = new EventSource(
-    `https://voxify-ai.onrender.com/tts-progress?text=${encodeURIComponent(textInput.value)}`
-  );
+  try {
+    const source = new EventSource(
+      `https://voxify-ai.onrender.com/tts-progress?text=${encodeURIComponent(textInput.value)}`
+    );
 
-  source.onmessage = async (event) => {
-    if (event.data === "done") {
-      source.close();
+    source.onmessage = async (event) => {
+      if (event.data === "done") {
+        source.close();
 
-      progressText.innerText = "Generating audio...";
+        progressText.innerText = "Generating audio...";
 
-      try {
         const res = await fetch("https://voxify-ai.onrender.com/tts", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: textInput.value,
             lang: detectLanguage(textInput.value)
           })
         });
 
+        if (!res.ok) throw new Error("Server error");
+
         const blob = await res.blob();
         const audioURL = URL.createObjectURL(blob);
 
         player.src = audioURL;
-        await player.play().catch(() => {});
+
+        await player.play().catch(() => {
+          alert("Tap play manually");
+        });
 
         progressBar.style.width = "100%";
         progressText.innerText = "Done ✅";
-
-      } catch (err) {
-        console.error(err);
-        alert("Audio failed ❌");
+        return;
       }
 
-      return;
-    }
+      const percent = event.data;
+      progressBar.style.width = percent + "%";
+      progressText.innerText = percent + "%";
+    };
 
-    const percent = event.data;
-    progressBar.style.width = percent + "%";
-    progressText.innerText = percent + "%";
-  };
+    source.onerror = () => {
+      source.close();
+      alert("Progress error ❌");
+    };
+
+  } catch (err) {
+    console.error(err);
+    alert("Audio failed ❌");
+  }
 }
 
 // 📥 DOWNLOAD
@@ -173,6 +179,8 @@ async function uploadFile() {
 
     const data = await res.json();
 
+    if (!data.text) throw new Error("No text");
+
     const cleanedText = data.text
       .replace(/\n/g, " ")
       .replace(/\s+/g, " ")
@@ -180,14 +188,70 @@ async function uploadFile() {
 
     textInput.value = cleanedText;
 
-    generate(); // 🔥 AUTO START
+    generate();
 
   } catch (err) {
     console.error(err);
-    alert("Upload failed");
+    alert("Upload failed ❌");
   }
 
   loader.style.display = "none";
+}
+
+// 🎬 VIDEO GENERATOR (BASIC)
+function createVideo() {
+  if (!player.src) return alert("Generate audio first!");
+
+  const canvas = document.getElementById("videoCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const audio = new Audio(player.src);
+  audio.play();
+
+  function draw() {
+    ctx.fillStyle = "#111";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "40px Poppins";
+    ctx.textAlign = "center";
+
+    wrapText(
+      ctx,
+      textInput.value.substring(0, 200),
+      canvas.width / 2,
+      400,
+      600,
+      50
+    );
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+
+  alert("Video preview running 🎬");
+}
+
+// 🧠 MULTI LINE TEXT
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(" ");
+  let line = "";
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + " ";
+    const width = ctx.measureText(testLine).width;
+
+    if (width > maxWidth && n > 0) {
+      ctx.fillText(line, x, y);
+      line = words[n] + " ";
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+
+  ctx.fillText(line, x, y);
 }
 
 // 🔥 INIT
