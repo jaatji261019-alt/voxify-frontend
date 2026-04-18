@@ -4,8 +4,10 @@ const voiceSelect = document.getElementById("voiceSelect");
 const player = document.getElementById("player");
 
 let voices = [];
+let currentAudioURL = null;
+let currentSource = null;
 
-// 🌍 AUTO LANGUAGE DETECT
+// 🌍 LANGUAGE DETECT
 function detectLanguage(text) {
   if (/[\u0900-\u097F]/.test(text)) return "hi";
   if (/[\u0600-\u06FF]/.test(text)) return "ar";
@@ -24,7 +26,7 @@ function loadVoices() {
   voices = v;
   voiceSelect.innerHTML = "";
 
-  voices.forEach((voice, i) => {
+  v.forEach((voice, i) => {
     const option = document.createElement("option");
     option.value = i;
     option.textContent = `${voice.name} (${voice.lang})`;
@@ -34,14 +36,13 @@ function loadVoices() {
 
 // 🔥 INIT VOICES
 function initVoices() {
-  let attempts = 0;
-
+  let tries = 0;
   const interval = setInterval(() => {
-    if (speechSynthesis.getVoices().length || attempts > 10) {
+    if (speechSynthesis.getVoices().length || tries > 10) {
       loadVoices();
       clearInterval(interval);
     }
-    attempts++;
+    tries++;
   }, 500);
 }
 
@@ -67,7 +68,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE WITH PROGRESS
+// 🎧 GENERATE AUDIO + PROGRESS
 async function generate() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -76,15 +77,26 @@ async function generate() {
 
   progressBar.style.width = "0%";
   progressText.innerText = "0%";
+  loader.style.display = "block";
+
+  // 🔥 clean old
+  if (currentAudioURL) {
+    URL.revokeObjectURL(currentAudioURL);
+    currentAudioURL = null;
+  }
+
+  if (currentSource) {
+    currentSource.close();
+  }
 
   try {
-    const source = new EventSource(
+    currentSource = new EventSource(
       `https://voxify-ai.onrender.com/tts-progress?text=${encodeURIComponent(textInput.value)}`
     );
 
-    source.onmessage = async (event) => {
+    currentSource.onmessage = async (event) => {
       if (event.data === "done") {
-        source.close();
+        currentSource.close();
 
         progressText.innerText = "Generating audio...";
 
@@ -100,16 +112,15 @@ async function generate() {
         if (!res.ok) throw new Error("Server error");
 
         const blob = await res.blob();
-        const audioURL = URL.createObjectURL(blob);
+        currentAudioURL = URL.createObjectURL(blob);
 
-        player.src = audioURL;
+        player.src = currentAudioURL;
 
-        await player.play().catch(() => {
-          alert("Tap play manually");
-        });
+        await player.play().catch(() => {});
 
         progressBar.style.width = "100%";
         progressText.innerText = "Done ✅";
+        loader.style.display = "none";
         return;
       }
 
@@ -118,23 +129,25 @@ async function generate() {
       progressText.innerText = percent + "%";
     };
 
-    source.onerror = () => {
-      source.close();
+    currentSource.onerror = () => {
+      currentSource.close();
+      loader.style.display = "none";
       alert("Progress error ❌");
     };
 
   } catch (err) {
     console.error(err);
+    loader.style.display = "none";
     alert("Audio failed ❌");
   }
 }
 
 // 📥 DOWNLOAD AUDIO
 function download() {
-  if (!player.src) return alert("Generate audio first!");
+  if (!currentAudioURL) return alert("Generate audio first!");
 
   const a = document.createElement("a");
-  a.href = player.src;
+  a.href = currentAudioURL;
   a.download = "voxify.mp3";
   a.click();
 }
@@ -165,30 +178,21 @@ async function uploadFile() {
   if (!file) return;
 
   document.getElementById("fileType").innerText = "File: " + file.name;
-
-  const formData = new FormData();
-  formData.append("file", file);
-
   loader.style.display = "block";
 
   try {
     const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
       method: "POST",
-      body: formData
+      body: new FormData().append("file", file)
     });
 
     const data = await res.json();
 
     if (!data.text) throw new Error("No text");
 
-    const cleanedText = data.text
-      .replace(/\n/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+    textInput.value = data.text.replace(/\s+/g, " ").trim();
 
-    textInput.value = cleanedText;
-
-    generate();
+    await generate();
 
   } catch (err) {
     console.error(err);
@@ -198,9 +202,9 @@ async function uploadFile() {
   loader.style.display = "none";
 }
 
-// 🎬 REAL VIDEO DOWNLOAD (WEBM)
+// 🎬 VIDEO DOWNLOAD (IMPROVED)
 async function createVideo() {
-  if (!player.src) return alert("Generate audio first!");
+  if (!currentAudioURL) return alert("Generate audio first!");
 
   const canvas = document.getElementById("videoCanvas");
   const ctx = canvas.getContext("2d");
@@ -220,11 +224,13 @@ async function createVideo() {
     a.href = url;
     a.download = "voxify-video.webm";
     a.click();
+
+    URL.revokeObjectURL(url);
   };
 
   recorder.start();
 
-  const audio = new Audio(player.src);
+  const audio = new Audio(currentAudioURL);
   audio.play();
 
   let words = textInput.value.split(" ");
