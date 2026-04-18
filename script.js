@@ -129,7 +129,7 @@ async function generate() {
   }
 }
 
-// 📥 DOWNLOAD
+// 📥 DOWNLOAD AUDIO
 function download() {
   if (!player.src) return alert("Generate audio first!");
 
@@ -198,60 +198,65 @@ async function uploadFile() {
   loader.style.display = "none";
 }
 
-// 🎬 VIDEO GENERATOR (BASIC)
-function createVideo() {
+// 🎬 REAL VIDEO DOWNLOAD (WEBM)
+async function createVideo() {
   if (!player.src) return alert("Generate audio first!");
 
   const canvas = document.getElementById("videoCanvas");
   const ctx = canvas.getContext("2d");
 
+  const stream = canvas.captureStream(30);
+  const recorder = new MediaRecorder(stream);
+
+  let chunks = [];
+
+  recorder.ondataavailable = e => chunks.push(e.data);
+
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: "video/webm" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "voxify-video.webm";
+    a.click();
+  };
+
+  recorder.start();
+
   const audio = new Audio(player.src);
   audio.play();
 
+  let words = textInput.value.split(" ");
+  let index = 0;
+
   function draw() {
-    ctx.fillStyle = "#111";
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = "#fff";
     ctx.font = "40px Poppins";
     ctx.textAlign = "center";
 
-    wrapText(
-      ctx,
-      textInput.value.substring(0, 200),
-      canvas.width / 2,
-      400,
-      600,
-      50
-    );
+    const line = words.slice(index, index + 6).join(" ");
+    ctx.fillText(line, canvas.width / 2, canvas.height / 2);
 
     requestAnimationFrame(draw);
   }
 
   draw();
 
-  alert("Video preview running 🎬");
-}
+  const interval = setInterval(() => {
+    index += 6;
 
-// 🧠 MULTI LINE TEXT
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  const words = text.split(" ");
-  let line = "";
-
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + " ";
-    const width = ctx.measureText(testLine).width;
-
-    if (width > maxWidth && n > 0) {
-      ctx.fillText(line, x, y);
-      line = words[n] + " ";
-      y += lineHeight;
-    } else {
-      line = testLine;
+    if (index >= words.length) {
+      clearInterval(interval);
+      recorder.stop();
+      audio.pause();
     }
-  }
+  }, 1000);
 
-  ctx.fillText(line, x, y);
+  alert("Video ban raha hai 🎬");
 }
 
 // 🔥 INIT
