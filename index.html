@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Voxify AI</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
 </head>
 
 <body>
@@ -14,20 +15,23 @@
 
     <!-- 🔥 HEADER -->
     <div class="header">
-      <h1>🎙 Voxify AI (Free)</h1>
-      <button id="themeToggle">🌙 Dark Mode</button>
+      <h1>🎙 Voxify AI</h1>
+      <button id="themeToggle">🌙</button>
     </div>
 
     <!-- 📄 FILE UPLOAD -->
-    <input type="file" id="fileInput" onchange="uploadFile()">
-    <p id="fileType"></p>
+    <div class="upload-box">
+      <input type="file" id="fileInput" onchange="uploadFile()" />
+      <p id="fileType">No file selected</p>
+    </div>
 
-    <!-- ✍️ TEXT -->
-    <textarea id="text" placeholder="Enter text here..."></textarea>
+    <!-- ✍️ TEXT INPUT -->
+    <textarea id="text" placeholder="Type or paste your text here..."></textarea>
 
     <!-- 🎚 CONTROLS -->
     <div class="controls">
       <select id="language">
+        <option value="auto">🌍 Auto Detect</option>
         <option value="en">English</option>
         <option value="hi">Hindi</option>
         <option value="es">Spanish</option>
@@ -43,7 +47,7 @@
       <select id="voiceSelect"></select>
     </div>
 
-    <!-- 🎮 BUTTONS -->
+    <!-- 🎮 ACTION BUTTONS -->
     <div class="buttons">
       <button onclick="preview()">▶ Preview</button>
       <button onclick="stopPreview()">⏹ Stop</button>
@@ -55,15 +59,15 @@
       <button onclick="playAudio()">▶ Play</button>
       <button onclick="pauseAudio()">⏸ Pause</button>
       <button onclick="stopAudio()">⏹ Stop</button>
-      <button onclick="download()">⬇ Download</button>
+      <button onclick="download()">⬇ Download MP3</button>
     </div>
 
-    <!-- 🎬 VIDEO GENERATOR 🔥 -->
+    <!-- 🎬 VIDEO -->
     <div class="buttons">
-      <button onclick="createVideo()">🎬 Create Video</button>
+      <button onclick="createVideo()">🎬 Download Video</button>
     </div>
 
-    <!-- 📊 PROGRESS BAR -->
+    <!-- 📊 PROGRESS -->
     <div id="progressContainer">
       <div id="progressBar"></div>
     </div>
@@ -75,7 +79,7 @@
     <!-- 🎧 AUDIO PLAYER -->
     <audio id="player" controls></audio>
 
-    <!-- 🎬 VIDEO CANVAS (HIDDEN) -->
+    <!-- 🎬 VIDEO CANVAS (hidden but required) -->
     <canvas id="videoCanvas" width="720" height="1280" style="display:none;"></canvas>
 
   </div>
