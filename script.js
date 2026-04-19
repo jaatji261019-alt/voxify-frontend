@@ -68,7 +68,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE AUDIO + PROGRESS
+// 🎧 GENERATE AUDIO
 async function generate() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -79,7 +79,7 @@ async function generate() {
   progressText.innerText = "0%";
   loader.style.display = "block";
 
-  // 🔥 clean old
+  // cleanup old audio
   if (currentAudioURL) {
     URL.revokeObjectURL(currentAudioURL);
     currentAudioURL = null;
@@ -97,7 +97,6 @@ async function generate() {
     currentSource.onmessage = async (event) => {
       if (event.data === "done") {
         currentSource.close();
-
         progressText.innerText = "Generating audio...";
 
         const res = await fetch("https://voxify-ai.onrender.com/tts", {
@@ -116,7 +115,9 @@ async function generate() {
 
         player.src = currentAudioURL;
 
-        await player.play().catch(() => {});
+        await player.play().catch(() => {
+          console.log("Autoplay blocked");
+        });
 
         progressBar.style.width = "100%";
         progressText.innerText = "Done ✅";
@@ -172,7 +173,7 @@ document.getElementById("themeToggle").addEventListener("click", () => {
   document.body.classList.toggle("light");
 });
 
-// 📄 FILE UPLOAD
+// 📄 FILE UPLOAD (FIXED)
 async function uploadFile() {
   const file = document.getElementById("fileInput").files[0];
   if (!file) return;
@@ -181,9 +182,12 @@ async function uploadFile() {
   loader.style.display = "block";
 
   try {
+    const formData = new FormData();
+    formData.append("file", file);
+
     const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
       method: "POST",
-      body: new FormData().append("file", file)
+      body: formData
     });
 
     const data = await res.json();
@@ -202,7 +206,7 @@ async function uploadFile() {
   loader.style.display = "none";
 }
 
-// 🎬 VIDEO DOWNLOAD (IMPROVED)
+// 🎬 VIDEO GENERATOR (IMPROVED FRONTEND)
 async function createVideo() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
@@ -237,11 +241,16 @@ async function createVideo() {
   let index = 0;
 
   function draw() {
-    ctx.fillStyle = "#000";
+    // 🎨 gradient background (cinematic feel)
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, "#000");
+    gradient.addColorStop(1, "#1e293b");
+
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "40px Poppins";
+    ctx.fillStyle = "#00ffcc";
+    ctx.font = "bold 42px Poppins";
     ctx.textAlign = "center";
 
     const line = words.slice(index, index + 6).join(" ");
@@ -262,7 +271,7 @@ async function createVideo() {
     }
   }, 1000);
 
-  alert("Video ban raha hai 🎬");
+  alert("Video generating 🎬");
 }
 
 // 🔥 INIT
