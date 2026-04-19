@@ -6,7 +6,7 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* 🌙 DARK MODE (DEFAULT) */
+/* 🌙 DARK MODE */
 body {
   background: #0f172a;
   color: #fff;
@@ -24,7 +24,7 @@ body.light {
 /* 📦 CONTAINER */
 .container {
   width: 100%;
-  max-width: 500px;
+  max-width: 550px;
   background: #1e293b;
   padding: 20px;
   border-radius: 15px;
@@ -52,6 +52,23 @@ body.light .container {
   padding: 6px 10px;
   border-radius: 8px;
   cursor: pointer;
+}
+
+/* 📦 SECTION BOX (NEW 🔥) */
+.section {
+  background: rgba(255,255,255,0.05);
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+body.light .section {
+  background: #f1f1f1;
+}
+
+.section h2 {
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
 /* 📄 FILE UPLOAD */
@@ -166,9 +183,22 @@ audio {
   text-align: center;
 }
 
-/* 🎬 VIDEO CANVAS (hidden) */
-#videoCanvas {
-  display: none;
+/* 🎬 VIDEO PREVIEW BOX (NEW 🔥) */
+.video-preview {
+  width: 100%;
+  height: 200px;
+  background: #000;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 14px;
+}
+
+body.light .video-preview {
+  background: #ddd;
+  color: #333;
 }
 
 /* 📱 MOBILE */
