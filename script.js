@@ -11,10 +11,6 @@ let currentSource = null;
 function detectLanguage(text) {
   if (/[\u0900-\u097F]/.test(text)) return "hi";
   if (/[\u0600-\u06FF]/.test(text)) return "ar";
-  if (/[\u4E00-\u9FFF]/.test(text)) return "zh-cn";
-  if (/[\u3040-\u30FF]/.test(text)) return "ja";
-  if (/[\uAC00-\uD7AF]/.test(text)) return "ko";
-  if (/[\u0400-\u04FF]/.test(text)) return "ru";
   return "en";
 }
 
@@ -34,7 +30,7 @@ function loadVoices() {
   });
 }
 
-// 🔥 INIT VOICES
+// 🔥 INIT
 function initVoices() {
   let tries = 0;
   const interval = setInterval(() => {
@@ -79,15 +75,13 @@ async function generate() {
   progressText.innerText = "0%";
   loader.style.display = "block";
 
-  // cleanup old audio
+  // cleanup old
   if (currentAudioURL) {
     URL.revokeObjectURL(currentAudioURL);
     currentAudioURL = null;
   }
 
-  if (currentSource) {
-    currentSource.close();
-  }
+  if (currentSource) currentSource.close();
 
   try {
     currentSource = new EventSource(
@@ -97,7 +91,6 @@ async function generate() {
     currentSource.onmessage = async (event) => {
       if (event.data === "done") {
         currentSource.close();
-        progressText.innerText = "Generating audio...";
 
         const res = await fetch("https://voxify-ai.onrender.com/tts", {
           method: "POST",
@@ -108,16 +101,11 @@ async function generate() {
           })
         });
 
-        if (!res.ok) throw new Error("Server error");
-
         const blob = await res.blob();
         currentAudioURL = URL.createObjectURL(blob);
 
         player.src = currentAudioURL;
-
-        await player.play().catch(() => {
-          console.log("Autoplay blocked");
-        });
+        await player.play().catch(() => {});
 
         progressBar.style.width = "100%";
         progressText.innerText = "Done ✅";
@@ -125,15 +113,8 @@ async function generate() {
         return;
       }
 
-      const percent = event.data;
-      progressBar.style.width = percent + "%";
-      progressText.innerText = percent + "%";
-    };
-
-    currentSource.onerror = () => {
-      currentSource.close();
-      loader.style.display = "none";
-      alert("Progress error ❌");
+      progressBar.style.width = event.data + "%";
+      progressText.innerText = event.data + "%";
     };
 
   } catch (err) {
@@ -153,125 +134,88 @@ function download() {
   a.click();
 }
 
-// 🎛 AUDIO CONTROLS
+// 🎛 AUDIO CONTROL
 function playAudio() {
   if (!player.src) return alert("Generate audio first!");
   player.play();
 }
-
 function pauseAudio() {
   player.pause();
 }
-
 function stopAudio() {
   player.pause();
   player.currentTime = 0;
 }
 
 // 🌗 THEME
-document.getElementById("themeToggle").addEventListener("click", () => {
+document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light");
-});
+};
 
-// 📄 FILE UPLOAD (FIXED)
+// 📄 FILE UPLOAD
 async function uploadFile() {
   const file = document.getElementById("fileInput").files[0];
   if (!file) return;
 
-  document.getElementById("fileType").innerText = "File: " + file.name;
   loader.style.display = "block";
 
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
+  const formData = new FormData();
+  formData.append("file", file);
 
+  try {
     const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
       method: "POST",
       body: formData
     });
 
     const data = await res.json();
-
-    if (!data.text) throw new Error("No text");
-
-    textInput.value = data.text.replace(/\s+/g, " ").trim();
+    textInput.value = data.text;
 
     await generate();
 
   } catch (err) {
-    console.error(err);
     alert("Upload failed ❌");
   }
 
   loader.style.display = "none";
 }
 
-// 🎬 VIDEO GENERATOR (IMPROVED FRONTEND)
+// 🎬 🎬 CINEMATIC VIDEO (🔥 MAIN FEATURE)
 async function createVideo() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
-  const canvas = document.getElementById("videoCanvas");
-  const ctx = canvas.getContext("2d");
+  loader.style.display = "block";
 
-  const stream = canvas.captureStream(30);
-  const recorder = new MediaRecorder(stream);
+  try {
+    const res = await fetch("https://voxify-ai.onrender.com/cinematic-video", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: textInput.value,
+        audioUrl: currentAudioURL
+      })
+    });
 
-  let chunks = [];
+    if (!res.ok) throw new Error("Video failed");
 
-  recorder.ondataavailable = e => chunks.push(e.data);
-
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: "video/webm" });
+    const blob = await res.blob();
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "voxify-video.webm";
+    a.download = "cinematic.mp4";
     a.click();
 
     URL.revokeObjectURL(url);
-  };
 
-  recorder.start();
-
-  const audio = new Audio(currentAudioURL);
-  audio.play();
-
-  let words = textInput.value.split(" ");
-  let index = 0;
-
-  function draw() {
-    // 🎨 gradient background (cinematic feel)
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, "#000");
-    gradient.addColorStop(1, "#1e293b");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#00ffcc";
-    ctx.font = "bold 42px Poppins";
-    ctx.textAlign = "center";
-
-    const line = words.slice(index, index + 6).join(" ");
-    ctx.fillText(line, canvas.width / 2, canvas.height / 2);
-
-    requestAnimationFrame(draw);
+  } catch (err) {
+    console.error(err);
+    alert("Video generation failed ❌");
   }
 
-  draw();
-
-  const interval = setInterval(() => {
-    index += 6;
-
-    if (index >= words.length) {
-      clearInterval(interval);
-      recorder.stop();
-      audio.pause();
-    }
-  }, 1000);
-
-  alert("Video generating 🎬");
+  loader.style.display = "none";
 }
 
 // 🔥 INIT
