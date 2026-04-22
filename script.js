@@ -1,3 +1,4 @@
+// ================= ELEMENTS =================
 const loader = document.getElementById("loader");
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
@@ -8,14 +9,14 @@ let voices = [];
 let currentAudioURL = null;
 let currentSource = null;
 
-// 🌍 LANGUAGE DETECT
+// ================= LANGUAGE =================
 function detectLanguage(text) {
   if (/[\u0900-\u097F]/.test(text)) return "hi";
   if (/[\u0600-\u06FF]/.test(text)) return "ar";
   return "en";
 }
 
-// 🔥 LOAD VOICES
+// ================= LOAD VOICES =================
 function loadVoices() {
   const v = speechSynthesis.getVoices();
   if (!v.length) return;
@@ -31,7 +32,7 @@ function loadVoices() {
   });
 }
 
-// 🔥 INIT VOICES
+// ================= INIT =================
 function initVoices() {
   let tries = 0;
   const interval = setInterval(() => {
@@ -43,7 +44,7 @@ function initVoices() {
   }, 500);
 }
 
-// 🔊 PREVIEW
+// ================= PREVIEW =================
 function preview() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -65,7 +66,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// 🎧 GENERATE AUDIO
+// ================= GENERATE AUDIO =================
 async function generate() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -76,6 +77,7 @@ async function generate() {
   progressText.innerText = "0%";
   loader.style.display = "block";
 
+  // cleanup old audio
   if (currentAudioURL) {
     URL.revokeObjectURL(currentAudioURL);
     currentAudioURL = null;
@@ -107,6 +109,8 @@ async function generate() {
         currentAudioURL = URL.createObjectURL(blob);
 
         player.src = currentAudioURL;
+        player.style.display = "block";
+
         await player.play().catch(() => {});
 
         progressBar.style.width = "100%";
@@ -122,7 +126,7 @@ async function generate() {
     currentSource.onerror = () => {
       currentSource.close();
       loader.style.display = "none";
-      alert("Progress error ❌");
+      alert("Progress error ❌ (Backend SSE issue)");
     };
 
   } catch (err) {
@@ -132,7 +136,7 @@ async function generate() {
   }
 }
 
-// 📥 DOWNLOAD AUDIO
+// ================= DOWNLOAD =================
 function download() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
@@ -142,7 +146,7 @@ function download() {
   a.click();
 }
 
-// 🎛 AUDIO CONTROLS
+// ================= AUDIO CONTROL =================
 function playAudio() {
   if (!player.src) return alert("Generate audio first!");
   player.play();
@@ -157,12 +161,12 @@ function stopAudio() {
   player.currentTime = 0;
 }
 
-// 🌗 THEME
+// ================= THEME =================
 document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light");
 };
 
-// 📄 FILE UPLOAD
+// ================= FILE UPLOAD =================
 async function uploadFile() {
   const file = document.getElementById("fileInput").files[0];
   if (!file) return;
@@ -194,14 +198,14 @@ async function uploadFile() {
   loader.style.display = "none";
 }
 
-// 🎬 🎬 CINEMATIC VIDEO (🔥 FIXED VERSION)
+// ================= 🎬 VIDEO =================
 async function createVideo() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
   loader.style.display = "block";
 
   try {
-    // 🔥 convert blob → real file
+    // 🔥 convert blob → file
     const audioBlob = await fetch(currentAudioURL).then(r => r.blob());
 
     const formData = new FormData();
@@ -231,6 +235,9 @@ async function createVideo() {
     a.download = "cinematic.mp4";
     a.click();
 
+    // cleanup
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
   } catch (err) {
     console.error(err);
     alert("Video generation failed ❌");
@@ -239,6 +246,6 @@ async function createVideo() {
   loader.style.display = "none";
 }
 
-// 🔥 INIT
+// ================= INIT =================
 speechSynthesis.onvoiceschanged = loadVoices;
 initVoices();
