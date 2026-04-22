@@ -30,7 +30,7 @@ function loadVoices() {
   });
 }
 
-// 🔥 INIT
+// 🔥 INIT VOICES
 function initVoices() {
   let tries = 0;
   const interval = setInterval(() => {
@@ -75,7 +75,7 @@ async function generate() {
   progressText.innerText = "0%";
   loader.style.display = "block";
 
-  // cleanup old
+  // cleanup old audio
   if (currentAudioURL) {
     URL.revokeObjectURL(currentAudioURL);
     currentAudioURL = null;
@@ -101,6 +101,8 @@ async function generate() {
           })
         });
 
+        if (!res.ok) throw new Error("TTS failed");
+
         const blob = await res.blob();
         currentAudioURL = URL.createObjectURL(blob);
 
@@ -115,6 +117,12 @@ async function generate() {
 
       progressBar.style.width = event.data + "%";
       progressText.innerText = event.data + "%";
+    };
+
+    currentSource.onerror = () => {
+      currentSource.close();
+      loader.style.display = "none";
+      alert("Progress error ❌");
     };
 
   } catch (err) {
@@ -139,9 +147,11 @@ function playAudio() {
   if (!player.src) return alert("Generate audio first!");
   player.play();
 }
+
 function pauseAudio() {
   player.pause();
 }
+
 function stopAudio() {
   player.pause();
   player.currentTime = 0;
@@ -169,25 +179,29 @@ async function uploadFile() {
     });
 
     const data = await res.json();
-    textInput.value = data.text;
+
+    if (!data.text) throw new Error("No text");
+
+    textInput.value = data.text.replace(/\s+/g, " ").trim();
 
     await generate();
 
   } catch (err) {
+    console.error(err);
     alert("Upload failed ❌");
   }
 
   loader.style.display = "none";
 }
 
-// 🎬 🎬 CINEMATIC VIDEO (🔥 MAIN FEATURE)
+// 🎬 🎬 CINEMATIC VIDEO (UPDATED 🔥)
 async function createVideo() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
   loader.style.display = "block";
 
   try {
-    const res = await fetch("https://voxify-ai.onrender.com/cinematic-video", {
+    const res = await fetch("https://your-python-api-url/cinematic", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -203,12 +217,18 @@ async function createVideo() {
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
 
+    // 🎬 preview video (NEW 🔥)
+    const videoPlayer = document.getElementById("videoPlayer");
+    if (videoPlayer) {
+      videoPlayer.src = url;
+      videoPlayer.style.display = "block";
+    }
+
+    // 📥 download
     const a = document.createElement("a");
     a.href = url;
     a.download = "cinematic.mp4";
     a.click();
-
-    URL.revokeObjectURL(url);
 
   } catch (err) {
     console.error(err);
