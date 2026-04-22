@@ -99,11 +99,14 @@
       </p>
 
       <div class="buttons">
-        <button onclick="createVideo()">🎬 Create & Download Video</button>
+        <button onclick="createVideo()">🎬 Create Cinematic Video</button>
       </div>
 
-      <!-- 🎬 CANVAS -->
-      <canvas id="videoCanvas" width="720" height="1280"></canvas>
+      <!-- 🎬 VIDEO PREVIEW (🔥 NEW) -->
+      <video id="videoPlayer" controls style="width:100%; margin-top:10px; display:none;"></video>
+
+      <!-- (optional hidden canvas if needed) -->
+      <canvas id="videoCanvas" width="720" height="1280" style="display:none;"></canvas>
 
     </div>
 
