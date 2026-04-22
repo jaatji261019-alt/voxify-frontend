@@ -2,6 +2,7 @@ const loader = document.getElementById("loader");
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
 const player = document.getElementById("player");
+const videoPlayer = document.getElementById("videoPlayer");
 
 let voices = [];
 let currentAudioURL = null;
@@ -75,7 +76,6 @@ async function generate() {
   progressText.innerText = "0%";
   loader.style.display = "block";
 
-  // cleanup old audio
   if (currentAudioURL) {
     URL.revokeObjectURL(currentAudioURL);
     currentAudioURL = null;
@@ -142,7 +142,7 @@ function download() {
   a.click();
 }
 
-// 🎛 AUDIO CONTROL
+// 🎛 AUDIO CONTROLS
 function playAudio() {
   if (!player.src) return alert("Generate audio first!");
   player.play();
@@ -194,22 +194,23 @@ async function uploadFile() {
   loader.style.display = "none";
 }
 
-// 🎬 🎬 CINEMATIC VIDEO (UPDATED 🔥)
+// 🎬 🎬 CINEMATIC VIDEO (🔥 FIXED VERSION)
 async function createVideo() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
   loader.style.display = "block";
 
   try {
-    const res = await fetch("https://your-python-api-url/cinematic", {
+    // 🔥 convert blob → real file
+    const audioBlob = await fetch(currentAudioURL).then(r => r.blob());
+
+    const formData = new FormData();
+    formData.append("audio", audioBlob, "audio.mp3");
+    formData.append("text", textInput.value);
+
+    const res = await fetch("https://voxify-ai.onrender.com/cinematic-video", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: textInput.value,
-        audioUrl: currentAudioURL
-      })
+      body: formData
     });
 
     if (!res.ok) throw new Error("Video failed");
@@ -217,11 +218,11 @@ async function createVideo() {
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
 
-    // 🎬 preview video (NEW 🔥)
-    const videoPlayer = document.getElementById("videoPlayer");
+    // 🎬 preview
     if (videoPlayer) {
       videoPlayer.src = url;
       videoPlayer.style.display = "block";
+      videoPlayer.play();
     }
 
     // 📥 download
