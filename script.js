@@ -4,6 +4,7 @@ const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
 const player = document.getElementById("player");
 const videoPlayer = document.getElementById("videoPlayer");
+const imageContainer = document.getElementById("imageContainer");
 
 let voices = [];
 let currentAudioURL = null;
@@ -77,7 +78,6 @@ async function generate() {
   progressText.innerText = "0%";
   loader.style.display = "block";
 
-  // cleanup old audio
   if (currentAudioURL) {
     URL.revokeObjectURL(currentAudioURL);
     currentAudioURL = null;
@@ -103,19 +103,20 @@ async function generate() {
           })
         });
 
-        if (!res.ok) throw new Error("TTS failed");
-
         const blob = await res.blob();
         currentAudioURL = URL.createObjectURL(blob);
 
         player.src = currentAudioURL;
         player.style.display = "block";
-
-        await player.play().catch(() => {});
+        player.play();
 
         progressBar.style.width = "100%";
         progressText.innerText = "Done ✅";
         loader.style.display = "none";
+
+        // 🔥 AUTO IMAGE GENERATE
+        generateImages();
+
         return;
       }
 
@@ -123,17 +124,76 @@ async function generate() {
       progressText.innerText = event.data + "%";
     };
 
-    currentSource.onerror = () => {
-      currentSource.close();
-      loader.style.display = "none";
-      alert("Progress error ❌ (Backend SSE issue)");
-    };
-
   } catch (err) {
     console.error(err);
     loader.style.display = "none";
     alert("Audio failed ❌");
   }
+}
+
+// ================= IMAGE GENERATE =================
+async function generateImages() {
+  try {
+    const res = await fetch("https://voxify-ai.onrender.com/generate-images", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: textInput.value
+      })
+    });
+
+    const data = await res.json();
+    showImages(data.images);
+
+    // 🔥 slideshow start
+    startSlideshow(data.images);
+
+  } catch (err) {
+    console.error(err);
+    alert("Image generation failed ❌");
+  }
+}
+
+// ================= SHOW IMAGES =================
+function showImages(images) {
+  imageContainer.innerHTML = "";
+
+  images.forEach(img => {
+    const image = document.createElement("img");
+    image.src = img;
+    image.style.width = "100%";
+    image.style.marginBottom = "10px";
+    imageContainer.appendChild(image);
+  });
+}
+
+// ================= 🎬 SLIDESHOW (CINEMATIC 🔥) =================
+function startSlideshow(images) {
+  if (!images.length) return;
+
+  let index = 0;
+
+  const slideImg = document.createElement("img");
+  slideImg.style.width = "100%";
+  slideImg.style.transition = "opacity 1s ease-in-out";
+
+  imageContainer.innerHTML = "";
+  imageContainer.appendChild(slideImg);
+
+  function nextSlide() {
+    slideImg.style.opacity = 0;
+
+    setTimeout(() => {
+      slideImg.src = images[index];
+      slideImg.style.opacity = 1;
+      index = (index + 1) % images.length;
+    }, 500);
+  }
+
+  slideImg.src = images[0];
+  setInterval(nextSlide, 3000);
 }
 
 // ================= DOWNLOAD =================
@@ -165,86 +225,6 @@ function stopAudio() {
 document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light");
 };
-
-// ================= FILE UPLOAD =================
-async function uploadFile() {
-  const file = document.getElementById("fileInput").files[0];
-  if (!file) return;
-
-  loader.style.display = "block";
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-
-    if (!data.text) throw new Error("No text");
-
-    textInput.value = data.text.replace(/\s+/g, " ").trim();
-
-    await generate();
-
-  } catch (err) {
-    console.error(err);
-    alert("Upload failed ❌");
-  }
-
-  loader.style.display = "none";
-}
-
-// ================= 🎬 VIDEO =================
-async function createVideo() {
-  if (!currentAudioURL) return alert("Generate audio first!");
-
-  loader.style.display = "block";
-
-  try {
-    // 🔥 convert blob → file
-    const audioBlob = await fetch(currentAudioURL).then(r => r.blob());
-
-    const formData = new FormData();
-    formData.append("audio", audioBlob, "audio.mp3");
-    formData.append("text", textInput.value);
-
-    const res = await fetch("https://voxify-ai.onrender.com/cinematic-video", {
-      method: "POST",
-      body: formData
-    });
-
-    if (!res.ok) throw new Error("Video failed");
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-
-    // 🎬 preview
-    if (videoPlayer) {
-      videoPlayer.src = url;
-      videoPlayer.style.display = "block";
-      videoPlayer.play();
-    }
-
-    // 📥 download
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "cinematic.mp4";
-    a.click();
-
-    // cleanup
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-  } catch (err) {
-    console.error(err);
-    alert("Video generation failed ❌");
-  }
-
-  loader.style.display = "none";
-}
 
 // ================= INIT =================
 speechSynthesis.onvoiceschanged = loadVoices;
