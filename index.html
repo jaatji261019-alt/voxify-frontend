@@ -18,16 +18,19 @@
 
     <!-- 🔥 HEADER -->
     <div class="header">
-      <h1>🎙 Voxify AI</h1>
+      <div>
+        <h1>🎙 Voxify AI</h1>
+        <div class="tagline">JAATJI'S WORLD</div>
+      </div>
       <button id="themeToggle">🌙</button>
     </div>
 
     <!-- ========================= -->
-    <!-- 🎧 TEXT TO SPEECH -->
+    <!-- 🎧 AUDIO GENERATION -->
     <!-- ========================= -->
     <div class="section">
 
-      <h2>🎧 Text to Speech</h2>
+      <h2>🎧 Audio Generator (TTS)</h2>
 
       <!-- 📄 FILE UPLOAD -->
       <div class="upload-box">
@@ -54,7 +57,7 @@
       <div class="buttons">
         <button onclick="preview()">▶ Preview</button>
         <button onclick="stopPreview()">⏹ Stop</button>
-        <button onclick="generate()">⚡ Generate</button>
+        <button onclick="generate()">⚡ Generate Audio</button>
       </div>
 
       <!-- 🎧 AUDIO CONTROLS -->
@@ -80,20 +83,25 @@
     </div>
 
     <!-- ========================= -->
-    <!-- 🖼 IMAGE + CINEMATIC -->
+    <!-- 🎬 VIDEO GENERATION -->
     <!-- ========================= -->
     <div class="section">
 
-      <h2>🎬 Cinematic Slideshow</h2>
+      <h2>🎬 Cinematic Video Generator</h2>
 
       <p class="info">
-        👉 Step 1: Generate audio <br>
-        👉 Step 2: Images auto generate <br>
-        👉 Step 3: Cinematic slideshow play
+        👉 Step 1: Enter script above <br>
+        👉 Step 2: Click Generate Video <br>
+        👉 Step 3: Watch cinematic output
       </p>
 
-      <!-- 🖼 IMAGE DISPLAY -->
-      <div id="imageContainer" style="margin-top:15px;"></div>
+      <!-- 🎬 VIDEO BUTTON -->
+      <div class="buttons">
+        <button onclick="generateVideo()">🎥 Generate Video</button>
+      </div>
+
+      <!-- 🖼 IMAGE / VIDEO DISPLAY -->
+      <div id="imageContainer"></div>
 
     </div>
 
