@@ -9,10 +9,36 @@ const imageContainer = document.getElementById("imageContainer");
 let voices = [];
 let currentAudioURL = null;
 
-// ================= LANGUAGE DETECTION =================
+// ================= 🌍 MULTI-LANGUAGE DETECTION (FINAL MERGED) =================
 function detectLanguage(text) {
-  if (/[\u0900-\u097F]/.test(text)) return "hi";
-  if (/[\u0600-\u06FF]/.test(text)) return "ar";
+  const langMap = [
+    // Indian languages
+    { regex: /[\u0900-\u097F]/, lang: "hi" },
+    { regex: /[\u0A00-\u0A7F]/, lang: "pa" },
+    { regex: /[\u0B80-\u0BFF]/, lang: "ta" },
+    { regex: /[\u0C00-\u0C7F]/, lang: "te" },
+    { regex: /[\u0D00-\u0D7F]/, lang: "ml" },
+    { regex: /[\u0C80-\u0CFF]/, lang: "kn" },
+
+    // Arabic / Urdu
+    { regex: /[\u0600-\u06FF]/, lang: "ar" },
+
+    // East Asian
+    { regex: /[\u4E00-\u9FFF]/, lang: "zh" },
+    { regex: /[\u3040-\u30FF]/, lang: "ja" },
+    { regex: /[\uAC00-\uD7AF]/, lang: "ko" },
+
+    // Russian
+    { regex: /[\u0400-\u04FF]/, lang: "ru" },
+
+    // Default Latin
+    { regex: /[a-zA-Z]/, lang: "en" },
+  ];
+
+  for (const item of langMap) {
+    if (item.regex.test(text)) return item.lang;
+  }
+
   return "en";
 }
 
@@ -56,7 +82,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// ================= 🎧 AUDIO GENERATION (ONLY AUDIO) =================
+// ================= 🎧 AUDIO GENERATION =================
 async function generateAudio() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -101,6 +127,7 @@ async function generateAudio() {
       progressBar.style.width = event.data + "%";
       progressText.innerText = event.data + "%";
     };
+
   } catch (err) {
     console.error(err);
     loader.style.display = "none";
@@ -108,7 +135,7 @@ async function generateAudio() {
   }
 }
 
-// ================= 🖼️ IMAGE GENERATION (ONLY IMAGES) =================
+// ================= 🖼️ IMAGE GENERATION =================
 async function generateImages() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -170,7 +197,7 @@ function startSlideshow(images) {
   setInterval(nextSlide, 3000);
 }
 
-// ================= 🎬 VIDEO GENERATION (ONLY VIDEO) =================
+// ================= 🎬 VIDEO GENERATION =================
 async function generateVideo() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
