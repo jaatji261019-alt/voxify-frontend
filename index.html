@@ -34,7 +34,7 @@
 
       <!-- 📄 FILE UPLOAD -->
       <div class="upload-box">
-        <input type="file" id="fileInput" onchange="uploadFile()" />
+        <input type="file" id="fileInput" onchange="handleFileUpload()" />
         <p id="fileType">No file selected</p>
       </div>
 
@@ -72,13 +72,13 @@
       <div id="progressContainer">
         <div id="progressBar"></div>
       </div>
-      <p id="progressText">0%</p>
+      <p id="progressText">Ready</p>
 
       <!-- 🔄 LOADER -->
       <div id="loader" class="loader"></div>
 
       <!-- 🎧 AUDIO PLAYER -->
-      <audio id="player" controls style="display:none;"></audio>
+      <audio id="player" controls style="display:none; margin-top:10px;"></audio>
 
     </div>
 
@@ -90,7 +90,7 @@
       <h2>🎬 Cinematic Video Generator</h2>
 
       <p class="info">
-        👉 Step 1: Enter script above <br>
+        👉 Step 1: Generate Audio <br>
         👉 Step 2: Click Generate Video <br>
         👉 Step 3: Watch cinematic output
       </p>
@@ -98,6 +98,7 @@
       <!-- 🎬 VIDEO BUTTON -->
       <div class="buttons">
         <button onclick="generateVideo()">🎥 Generate Video</button>
+        <button onclick="generateImages()">🖼 Generate Images</button>
       </div>
 
       <!-- 🖼 IMAGE / VIDEO DISPLAY -->
