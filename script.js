@@ -8,16 +8,15 @@ const imageContainer = document.getElementById("imageContainer");
 
 let voices = [];
 let currentAudioURL = null;
-let currentSource = null;
 
-// ================= LANGUAGE =================
+// ================= LANGUAGE DETECTION =================
 function detectLanguage(text) {
   if (/[\u0900-\u097F]/.test(text)) return "hi";
   if (/[\u0600-\u06FF]/.test(text)) return "ar";
   return "en";
 }
 
-// ================= LOAD VOICES =================
+// ================= INIT VOICES =================
 function loadVoices() {
   const v = speechSynthesis.getVoices();
   if (!v.length) return;
@@ -33,19 +32,9 @@ function loadVoices() {
   });
 }
 
-// ================= INIT =================
-function initVoices() {
-  let tries = 0;
-  const interval = setInterval(() => {
-    if (speechSynthesis.getVoices().length || tries > 10) {
-      loadVoices();
-      clearInterval(interval);
-    }
-    tries++;
-  }, 500);
-}
+speechSynthesis.onvoiceschanged = loadVoices;
 
-// ================= PREVIEW =================
+// ================= PREVIEW VOICE =================
 function preview() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -67,8 +56,8 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// ================= GENERATE AUDIO =================
-async function generate() {
+// ================= 🎧 AUDIO GENERATION (ONLY AUDIO) =================
+async function generateAudio() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
   const progressBar = document.getElementById("progressBar");
@@ -78,29 +67,22 @@ async function generate() {
   progressText.innerText = "0%";
   loader.style.display = "block";
 
-  if (currentAudioURL) {
-    URL.revokeObjectURL(currentAudioURL);
-    currentAudioURL = null;
-  }
-
-  if (currentSource) currentSource.close();
-
   try {
-    currentSource = new EventSource(
+    const source = new EventSource(
       `https://voxify-ai.onrender.com/tts-progress?text=${encodeURIComponent(textInput.value)}`
     );
 
-    currentSource.onmessage = async (event) => {
+    source.onmessage = async (event) => {
       if (event.data === "done") {
-        currentSource.close();
+        source.close();
 
         const res = await fetch("https://voxify-ai.onrender.com/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: textInput.value,
-            lang: detectLanguage(textInput.value)
-          })
+            lang: detectLanguage(textInput.value),
+          }),
         });
 
         const blob = await res.blob();
@@ -108,14 +90,10 @@ async function generate() {
 
         player.src = currentAudioURL;
         player.style.display = "block";
-        player.play();
 
         progressBar.style.width = "100%";
-        progressText.innerText = "Done ✅";
+        progressText.innerText = "Audio Ready ✅";
         loader.style.display = "none";
-
-        // 🔥 AUTO IMAGE GENERATE
-        generateImages();
 
         return;
       }
@@ -123,7 +101,6 @@ async function generate() {
       progressBar.style.width = event.data + "%";
       progressText.innerText = event.data + "%";
     };
-
   } catch (err) {
     console.error(err);
     loader.style.display = "none";
@@ -131,23 +108,20 @@ async function generate() {
   }
 }
 
-// ================= IMAGE GENERATE =================
+// ================= 🖼️ IMAGE GENERATION (ONLY IMAGES) =================
 async function generateImages() {
+  if (!textInput.value.trim()) return alert("Enter text!");
+
   try {
     const res = await fetch("https://voxify-ai.onrender.com/generate-images", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: textInput.value
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: textInput.value }),
     });
 
     const data = await res.json();
-    showImages(data.images);
 
-    // 🔥 slideshow start
+    showImages(data.images);
     startSlideshow(data.images);
 
   } catch (err) {
@@ -169,7 +143,7 @@ function showImages(images) {
   });
 }
 
-// ================= 🎬 SLIDESHOW (CINEMATIC 🔥) =================
+// ================= 🎬 SLIDESHOW =================
 function startSlideshow(images) {
   if (!images.length) return;
 
@@ -196,7 +170,43 @@ function startSlideshow(images) {
   setInterval(nextSlide, 3000);
 }
 
-// ================= DOWNLOAD =================
+// ================= 🎬 VIDEO GENERATION (ONLY VIDEO) =================
+async function generateVideo() {
+  if (!textInput.value.trim()) return alert("Enter text!");
+
+  if (!currentAudioURL) {
+    return alert("Pehle audio generate karo!");
+  }
+
+  try {
+    loader.style.display = "block";
+
+    const res = await fetch("https://voxify-ai.onrender.com/generate-video", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        audioText: textInput.value,
+        imagePrompts: textInput.value.split(".").filter(t => t.trim())
+      }),
+    });
+
+    const blob = await res.blob();
+    const videoURL = URL.createObjectURL(blob);
+
+    videoPlayer.src = videoURL;
+    videoPlayer.style.display = "block";
+    videoPlayer.play();
+
+    loader.style.display = "none";
+
+  } catch (err) {
+    console.error(err);
+    loader.style.display = "none";
+    alert("Video generation failed ❌");
+  }
+}
+
+// ================= DOWNLOAD AUDIO =================
 function download() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
@@ -206,7 +216,7 @@ function download() {
   a.click();
 }
 
-// ================= AUDIO CONTROL =================
+// ================= AUDIO CONTROLS =================
 function playAudio() {
   if (!player.src) return alert("Generate audio first!");
   player.play();
@@ -225,7 +235,3 @@ function stopAudio() {
 document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light");
 };
-
-// ================= INIT =================
-speechSynthesis.onvoiceschanged = loadVoices;
-initVoices();
