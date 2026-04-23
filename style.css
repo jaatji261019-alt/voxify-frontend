@@ -6,7 +6,7 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* 🌙 DARK MODE */
+/* 🌙 BODY */
 body {
   background: #0f172a;
   color: #fff;
@@ -24,11 +24,14 @@ body.light {
 /* 📦 CONTAINER */
 .container {
   width: 100%;
-  max-width: 550px;
+  max-width: 600px;
   background: #1e293b;
   padding: 20px;
   border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  box-shadow: 0 0 25px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* 🔥 section gap */
 }
 
 body.light .container {
@@ -40,7 +43,6 @@ body.light .container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
 }
 
 .header h1 {
@@ -54,12 +56,14 @@ body.light .container {
   cursor: pointer;
 }
 
-/* 📦 SECTION BOX (NEW 🔥) */
+/* 📦 SECTION */
 .section {
   background: rgba(255,255,255,0.05);
   padding: 15px;
   border-radius: 12px;
-  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* 🔥 internal spacing */
 }
 
 body.light .section {
@@ -68,29 +72,17 @@ body.light .section {
 
 .section h2 {
   font-size: 16px;
-  margin-bottom: 10px;
-}
-
-/* 📄 FILE UPLOAD */
-.upload-box {
-  margin-bottom: 10px;
-}
-
-#fileInput {
-  width: 100%;
-  margin-bottom: 5px;
 }
 
 /* ✍️ TEXTAREA */
 textarea {
   width: 100%;
   height: 120px;
-  padding: 10px;
+  padding: 12px;
   border-radius: 10px;
   border: none;
   outline: none;
   resize: none;
-  margin-bottom: 10px;
   font-size: 14px;
 }
 
@@ -102,7 +94,6 @@ body.light textarea {
 .controls {
   display: flex;
   gap: 10px;
-  margin-bottom: 10px;
 }
 
 select {
@@ -117,7 +108,6 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 10px;
 }
 
 button {
@@ -136,10 +126,29 @@ button:hover {
   transform: scale(1.05);
 }
 
-/* 🎧 AUDIO PLAYER */
+/* 🎧 AUDIO SECTION */
 audio {
   width: 100%;
   margin-top: 10px;
+  border-radius: 8px;
+}
+
+/* 🖼 IMAGE CONTAINER */
+#imageContainer {
+  width: 100%;
+  min-height: 200px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 🎬 SLIDESHOW IMAGE */
+#imageContainer img {
+  width: 100%;
+  border-radius: 10px;
+  object-fit: cover;
 }
 
 /* 🔄 LOADER */
@@ -150,7 +159,7 @@ audio {
   width: 30px;
   height: 30px;
   animation: spin 1s linear infinite;
-  margin: 10px auto;
+  margin: auto;
   display: none;
 }
 
@@ -167,7 +176,6 @@ audio {
   background: #333;
   border-radius: 10px;
   overflow: hidden;
-  margin-top: 10px;
 }
 
 #progressBar {
@@ -178,28 +186,13 @@ audio {
 }
 
 #progressText {
-  font-size: 14px;
-  margin-top: 5px;
+  font-size: 13px;
   text-align: center;
 }
 
-/* 🎬 VIDEO PREVIEW BOX (NEW 🔥) */
-.video-preview {
-  width: 100%;
-  height: 200px;
-  background: #000;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #aaa;
-  font-size: 14px;
-}
-
-body.light .video-preview {
-  background: #ddd;
-  color: #333;
-}
+/* ========================= */
+/* 📱 RESPONSIVE DESIGN */
+/* ========================= */
 
 /* 📱 MOBILE */
 @media (max-width: 500px) {
@@ -210,5 +203,27 @@ body.light .video-preview {
   button {
     font-size: 12px;
     padding: 8px;
+  }
+
+  textarea {
+    height: 100px;
+  }
+}
+
+/* 📲 TABLET */
+@media (min-width: 501px) and (max-width: 900px) {
+  .container {
+    max-width: 700px;
+  }
+}
+
+/* 💻 LAPTOP / DESKTOP */
+@media (min-width: 901px) {
+  body {
+    padding: 40px;
+  }
+
+  .container {
+    max-width: 750px;
   }
 }
