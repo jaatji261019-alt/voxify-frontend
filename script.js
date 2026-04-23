@@ -2,20 +2,23 @@
 const loader = document.getElementById("loader");
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
+const languageSelect = document.getElementById("language");
 const player = document.getElementById("player");
 const imageContainer = document.getElementById("imageContainer");
 
 let voices = [];
 let currentAudioURL = null;
 
-// ================= 🌍 LANGUAGE DETECTION =================
+// ================= 🌍 LANGUAGE =================
 function detectLanguage(text) {
+  if (languageSelect.value !== "auto") return languageSelect.value;
+
   if (/[\u0900-\u097F]/.test(text)) return "hi";
   if (/[\u0600-\u06FF]/.test(text)) return "ar";
   return "en";
 }
 
-// ================= LOAD VOICES =================
+// ================= 🔥 LOAD VOICES =================
 function loadVoices() {
   const v = speechSynthesis.getVoices();
   if (!v.length) return;
@@ -65,6 +68,8 @@ async function generateAudio() {
   loader.style.display = "block";
 
   try {
+    const lang = detectLanguage(textInput.value);
+
     const res = await fetch("https://voxify-ai.onrender.com/tts", {
       method: "POST",
       headers: {
@@ -72,22 +77,39 @@ async function generateAudio() {
       },
       body: JSON.stringify({
         text: textInput.value,
-        lang: detectLanguage(textInput.value)
+        lang: lang
       })
     });
 
-    if (!res.ok) throw new Error("Server error");
+    if (!res.ok) {
+      throw new Error("Backend TTS failed");
+    }
 
     const blob = await res.blob();
+
+    // ❌ empty audio fix
+    if (blob.size < 1000) {
+      throw new Error("Audio empty");
+    }
+
+    if (currentAudioURL) URL.revokeObjectURL(currentAudioURL);
+
     currentAudioURL = URL.createObjectURL(blob);
 
     player.src = currentAudioURL;
     player.style.display = "block";
-    player.play();
+
+    await player.play().catch(() => {});
 
   } catch (err) {
-    console.error(err);
-    alert("Audio generation failed ❌");
+    console.error("AUDIO ERROR:", err);
+
+    // 🔥 fallback (browser TTS)
+    alert("Server audio failed → using browser voice");
+
+    const fallback = new SpeechSynthesisUtterance(textInput.value);
+    fallback.lang = detectLanguage(textInput.value);
+    speechSynthesis.speak(fallback);
   }
 
   loader.style.display = "none";
@@ -106,7 +128,7 @@ function download() {
   a.click();
 }
 
-// ================= 🎧 AUDIO CONTROLS =================
+// ================= 🎧 CONTROLS =================
 function playAudio() {
   if (!player.src) return alert("Generate audio first!");
   player.play();
@@ -138,9 +160,14 @@ async function generateImages() {
       })
     });
 
+    if (!res.ok) throw new Error("Image API failed");
+
     const data = await res.json();
 
-    showImages(data.images);
+    if (!data.images || !data.images.length) {
+      throw new Error("No images");
+    }
+
     startSlideshow(data.images);
 
   } catch (err) {
@@ -151,88 +178,31 @@ async function generateImages() {
   loader.style.display = "none";
 }
 
-// ================= SHOW IMAGES =================
-function showImages(images) {
-  imageContainer.innerHTML = "";
-
-  images.forEach(img => {
-    const image = document.createElement("img");
-    image.src = img;
-    image.style.width = "100%";
-    image.style.borderRadius = "10px";
-    image.style.marginBottom = "10px";
-    imageContainer.appendChild(image);
-  });
-}
-
 // ================= 🎬 SLIDESHOW =================
 function startSlideshow(images) {
-  if (!images.length) return;
+  imageContainer.innerHTML = "";
 
   let index = 0;
 
-  const slideImg = document.createElement("img");
-  slideImg.style.width = "100%";
-  slideImg.style.borderRadius = "10px";
-  slideImg.style.transition = "opacity 1s ease-in-out";
+  const img = document.createElement("img");
+  img.style.width = "100%";
+  img.style.borderRadius = "10px";
+  img.style.transition = "opacity 1s";
 
-  imageContainer.innerHTML = "";
-  imageContainer.appendChild(slideImg);
+  imageContainer.appendChild(img);
 
-  function nextSlide() {
-    slideImg.style.opacity = 0;
+  function show() {
+    img.style.opacity = 0;
 
     setTimeout(() => {
-      slideImg.src = images[index];
-      slideImg.style.opacity = 1;
+      img.src = images[index];
+      img.style.opacity = 1;
       index = (index + 1) % images.length;
     }, 500);
   }
 
-  slideImg.src = images[0];
-  setInterval(nextSlide, 3000);
-}
-
-// ================= 🎬 VIDEO GENERATION =================
-async function generateVideo() {
-  if (!textInput.value.trim()) return alert("Enter text!");
-  if (!currentAudioURL) return alert("Pehle audio generate karo!");
-
-  loader.style.display = "block";
-
-  try {
-    const res = await fetch("https://voxify-ai.onrender.com/generate-video", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: textInput.value
-      })
-    });
-
-    if (!res.ok) throw new Error("Video error");
-
-    const blob = await res.blob();
-    const videoURL = URL.createObjectURL(blob);
-
-    const video = document.createElement("video");
-    video.src = videoURL;
-    video.controls = true;
-    video.style.width = "100%";
-    video.style.marginTop = "10px";
-
-    imageContainer.innerHTML = "";
-    imageContainer.appendChild(video);
-
-    video.play();
-
-  } catch (err) {
-    console.error(err);
-    alert("Video generation failed ❌");
-  }
-
-  loader.style.display = "none";
+  img.src = images[0];
+  setInterval(show, 3000);
 }
 
 // ================= 🌙 THEME =================
