@@ -3,46 +3,19 @@ const loader = document.getElementById("loader");
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
 const player = document.getElementById("player");
-const videoPlayer = document.getElementById("videoPlayer");
 const imageContainer = document.getElementById("imageContainer");
 
 let voices = [];
 let currentAudioURL = null;
 
-// ================= 🌍 MULTI-LANGUAGE DETECTION (FINAL MERGED) =================
+// ================= 🌍 LANGUAGE DETECTION =================
 function detectLanguage(text) {
-  const langMap = [
-    // Indian languages
-    { regex: /[\u0900-\u097F]/, lang: "hi" },
-    { regex: /[\u0A00-\u0A7F]/, lang: "pa" },
-    { regex: /[\u0B80-\u0BFF]/, lang: "ta" },
-    { regex: /[\u0C00-\u0C7F]/, lang: "te" },
-    { regex: /[\u0D00-\u0D7F]/, lang: "ml" },
-    { regex: /[\u0C80-\u0CFF]/, lang: "kn" },
-
-    // Arabic / Urdu
-    { regex: /[\u0600-\u06FF]/, lang: "ar" },
-
-    // East Asian
-    { regex: /[\u4E00-\u9FFF]/, lang: "zh" },
-    { regex: /[\u3040-\u30FF]/, lang: "ja" },
-    { regex: /[\uAC00-\uD7AF]/, lang: "ko" },
-
-    // Russian
-    { regex: /[\u0400-\u04FF]/, lang: "ru" },
-
-    // Default Latin
-    { regex: /[a-zA-Z]/, lang: "en" },
-  ];
-
-  for (const item of langMap) {
-    if (item.regex.test(text)) return item.lang;
-  }
-
+  if (/[\u0900-\u097F]/.test(text)) return "hi";
+  if (/[\u0600-\u06FF]/.test(text)) return "ar";
   return "en";
 }
 
-// ================= INIT VOICES =================
+// ================= LOAD VOICES =================
 function loadVoices() {
   const v = speechSynthesis.getVoices();
   if (!v.length) return;
@@ -60,7 +33,7 @@ function loadVoices() {
 
 speechSynthesis.onvoiceschanged = loadVoices;
 
-// ================= PREVIEW VOICE =================
+// ================= 🔊 PREVIEW =================
 function preview() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -84,66 +57,85 @@ function stopPreview() {
 
 // ================= 🎧 AUDIO GENERATION =================
 async function generateAudio() {
-  if (!textInput.value.trim()) return alert("Enter text!");
+  if (!textInput.value.trim()) {
+    alert("Enter text!");
+    return;
+  }
 
-  const progressBar = document.getElementById("progressBar");
-  const progressText = document.getElementById("progressText");
-
-  progressBar.style.width = "0%";
-  progressText.innerText = "0%";
   loader.style.display = "block";
 
   try {
-    const source = new EventSource(
-      `https://voxify-ai.onrender.com/tts-progress?text=${encodeURIComponent(textInput.value)}`
-    );
+    const res = await fetch("https://voxify-ai.onrender.com/tts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: textInput.value,
+        lang: detectLanguage(textInput.value)
+      })
+    });
 
-    source.onmessage = async (event) => {
-      if (event.data === "done") {
-        source.close();
+    if (!res.ok) throw new Error("Server error");
 
-        const res = await fetch("https://voxify-ai.onrender.com/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: textInput.value,
-            lang: detectLanguage(textInput.value),
-          }),
-        });
+    const blob = await res.blob();
+    currentAudioURL = URL.createObjectURL(blob);
 
-        const blob = await res.blob();
-        currentAudioURL = URL.createObjectURL(blob);
-
-        player.src = currentAudioURL;
-        player.style.display = "block";
-
-        progressBar.style.width = "100%";
-        progressText.innerText = "Audio Ready ✅";
-        loader.style.display = "none";
-
-        return;
-      }
-
-      progressBar.style.width = event.data + "%";
-      progressText.innerText = event.data + "%";
-    };
+    player.src = currentAudioURL;
+    player.style.display = "block";
+    player.play();
 
   } catch (err) {
     console.error(err);
-    loader.style.display = "none";
-    alert("Audio failed ❌");
+    alert("Audio generation failed ❌");
   }
+
+  loader.style.display = "none";
 }
 
-// ================= 🖼️ IMAGE GENERATION =================
+// ================= 📥 DOWNLOAD =================
+function download() {
+  if (!currentAudioURL) {
+    alert("Generate audio first!");
+    return;
+  }
+
+  const a = document.createElement("a");
+  a.href = currentAudioURL;
+  a.download = "voxify.mp3";
+  a.click();
+}
+
+// ================= 🎧 AUDIO CONTROLS =================
+function playAudio() {
+  if (!player.src) return alert("Generate audio first!");
+  player.play();
+}
+
+function pauseAudio() {
+  player.pause();
+}
+
+function stopAudio() {
+  player.pause();
+  player.currentTime = 0;
+}
+
+// ================= 🖼 IMAGE GENERATION =================
 async function generateImages() {
   if (!textInput.value.trim()) return alert("Enter text!");
+
+  loader.style.display = "block";
 
   try {
     const res = await fetch("https://voxify-ai.onrender.com/generate-images", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: textInput.value }),
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: textInput.value
+      })
     });
 
     const data = await res.json();
@@ -155,6 +147,8 @@ async function generateImages() {
     console.error(err);
     alert("Image generation failed ❌");
   }
+
+  loader.style.display = "none";
 }
 
 // ================= SHOW IMAGES =================
@@ -165,6 +159,7 @@ function showImages(images) {
     const image = document.createElement("img");
     image.src = img;
     image.style.width = "100%";
+    image.style.borderRadius = "10px";
     image.style.marginBottom = "10px";
     imageContainer.appendChild(image);
   });
@@ -178,6 +173,7 @@ function startSlideshow(images) {
 
   const slideImg = document.createElement("img");
   slideImg.style.width = "100%";
+  slideImg.style.borderRadius = "10px";
   slideImg.style.transition = "opacity 1s ease-in-out";
 
   imageContainer.innerHTML = "";
@@ -200,65 +196,46 @@ function startSlideshow(images) {
 // ================= 🎬 VIDEO GENERATION =================
 async function generateVideo() {
   if (!textInput.value.trim()) return alert("Enter text!");
+  if (!currentAudioURL) return alert("Pehle audio generate karo!");
 
-  if (!currentAudioURL) {
-    return alert("Pehle audio generate karo!");
-  }
+  loader.style.display = "block";
 
   try {
-    loader.style.display = "block";
-
     const res = await fetch("https://voxify-ai.onrender.com/generate-video", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
-        audioText: textInput.value,
-        imagePrompts: textInput.value.split(".").filter(t => t.trim())
-      }),
+        text: textInput.value
+      })
     });
+
+    if (!res.ok) throw new Error("Video error");
 
     const blob = await res.blob();
     const videoURL = URL.createObjectURL(blob);
 
-    videoPlayer.src = videoURL;
-    videoPlayer.style.display = "block";
-    videoPlayer.play();
+    const video = document.createElement("video");
+    video.src = videoURL;
+    video.controls = true;
+    video.style.width = "100%";
+    video.style.marginTop = "10px";
 
-    loader.style.display = "none";
+    imageContainer.innerHTML = "";
+    imageContainer.appendChild(video);
+
+    video.play();
 
   } catch (err) {
     console.error(err);
-    loader.style.display = "none";
     alert("Video generation failed ❌");
   }
+
+  loader.style.display = "none";
 }
 
-// ================= DOWNLOAD AUDIO =================
-function download() {
-  if (!currentAudioURL) return alert("Generate audio first!");
-
-  const a = document.createElement("a");
-  a.href = currentAudioURL;
-  a.download = "voxify.mp3";
-  a.click();
-}
-
-// ================= AUDIO CONTROLS =================
-function playAudio() {
-  if (!player.src) return alert("Generate audio first!");
-  player.play();
-}
-
-function pauseAudio() {
-  player.pause();
-}
-
-function stopAudio() {
-  player.pause();
-  player.currentTime = 0;
-}
-
-// ================= THEME =================
+// ================= 🌙 THEME =================
 document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light");
 };
