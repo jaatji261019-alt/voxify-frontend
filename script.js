@@ -8,6 +8,7 @@ const imageContainer = document.getElementById("imageContainer");
 
 let voices = [];
 let currentAudioURL = null;
+let currentImages = [];
 
 // ================= 🌍 LANGUAGE =================
 function detectLanguage(text) {
@@ -33,7 +34,6 @@ function loadVoices() {
     voiceSelect.appendChild(option);
   });
 }
-
 speechSynthesis.onvoiceschanged = loadVoices;
 
 // ================= 🔊 PREVIEW =================
@@ -58,12 +58,9 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// ================= 🎧 AUDIO GENERATION =================
+// ================= 🎧 AUDIO =================
 async function generateAudio() {
-  if (!textInput.value.trim()) {
-    alert("Enter text!");
-    return;
-  }
+  if (!textInput.value.trim()) return alert("Enter text!");
 
   loader.style.display = "block";
 
@@ -81,16 +78,11 @@ async function generateAudio() {
       })
     });
 
-    if (!res.ok) {
-      throw new Error("Backend TTS failed");
-    }
+    if (!res.ok) throw new Error("TTS failed");
 
     const blob = await res.blob();
 
-    // ❌ empty audio fix
-    if (blob.size < 1000) {
-      throw new Error("Audio empty");
-    }
+    if (blob.size < 1000) throw new Error("Empty audio");
 
     if (currentAudioURL) URL.revokeObjectURL(currentAudioURL);
 
@@ -102,10 +94,9 @@ async function generateAudio() {
     await player.play().catch(() => {});
 
   } catch (err) {
-    console.error("AUDIO ERROR:", err);
+    console.error(err);
 
-    // 🔥 fallback (browser TTS)
-    alert("Server audio failed → using browser voice");
+    alert("Server failed → using browser voice");
 
     const fallback = new SpeechSynthesisUtterance(textInput.value);
     fallback.lang = detectLanguage(textInput.value);
@@ -115,12 +106,9 @@ async function generateAudio() {
   loader.style.display = "none";
 }
 
-// ================= 📥 DOWNLOAD =================
-function download() {
-  if (!currentAudioURL) {
-    alert("Generate audio first!");
-    return;
-  }
+// ================= 📥 AUDIO DOWNLOAD =================
+function downloadAudio() {
+  if (!currentAudioURL) return alert("Generate audio first!");
 
   const a = document.createElement("a");
   a.href = currentAudioURL;
@@ -150,25 +138,17 @@ async function generateImages() {
   loader.style.display = "block";
 
   try {
-    const res = await fetch("https://voxify-ai.onrender.com/generate-images", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: textInput.value
-      })
+    // 🔥 Direct Pollinations (no backend dependency)
+    const lines = textInput.value.split(".").filter(t => t.trim()).slice(0, 5);
+
+    currentImages = lines.map(line => {
+      return `https://image.pollinations.ai/prompt/${encodeURIComponent(
+        line + " cinematic lighting ultra realistic 4k"
+      )}`;
     });
 
-    if (!res.ok) throw new Error("Image API failed");
-
-    const data = await res.json();
-
-    if (!data.images || !data.images.length) {
-      throw new Error("No images");
-    }
-
-    startSlideshow(data.images);
+    startSlideshow(currentImages);
+    showDownloadImagesButton();
 
   } catch (err) {
     console.error(err);
@@ -187,22 +167,41 @@ function startSlideshow(images) {
   const img = document.createElement("img");
   img.style.width = "100%";
   img.style.borderRadius = "10px";
-  img.style.transition = "opacity 1s";
 
   imageContainer.appendChild(img);
 
   function show() {
-    img.style.opacity = 0;
-
-    setTimeout(() => {
-      img.src = images[index];
-      img.style.opacity = 1;
-      index = (index + 1) % images.length;
-    }, 500);
+    img.src = images[index];
+    index = (index + 1) % images.length;
   }
 
-  img.src = images[0];
+  show();
   setInterval(show, 3000);
+}
+
+// ================= 📥 IMAGE DOWNLOAD =================
+function showDownloadImagesButton() {
+  const btn = document.createElement("button");
+  btn.innerText = "⬇ Download Images";
+  btn.style.marginTop = "10px";
+
+  btn.onclick = () => {
+    currentImages.forEach((url, i) => {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `image_${i}.jpg`;
+      a.click();
+    });
+  };
+
+  imageContainer.appendChild(btn);
+}
+
+// ================= 🎬 VIDEO (BASIC VERSION) =================
+function generateVideo() {
+  if (!currentImages.length) return alert("Generate images first!");
+
+  alert("⚠️ Video generation heavy hai → Render free pe fail hota hai.\nAbhi slideshow hi best option hai.");
 }
 
 // ================= 🌙 THEME =================
