@@ -9,6 +9,7 @@ const imageContainer = document.getElementById("imageContainer");
 let voices = [];
 let currentAudioURL = null;
 let currentImages = [];
+let slideInterval = null;
 
 // ================= 🌍 LANGUAGE =================
 function detectLanguage(text) {
@@ -82,6 +83,7 @@ async function generateAudio() {
 
     const blob = await res.blob();
 
+    // 🔥 empty audio fix
     if (blob.size < 1000) throw new Error("Empty audio");
 
     if (currentAudioURL) URL.revokeObjectURL(currentAudioURL);
@@ -96,6 +98,7 @@ async function generateAudio() {
   } catch (err) {
     console.error(err);
 
+    // fallback
     alert("Server failed → using browser voice");
 
     const fallback = new SpeechSynthesisUtterance(textInput.value);
@@ -138,8 +141,12 @@ async function generateImages() {
   loader.style.display = "block";
 
   try {
-    // 🔥 Direct Pollinations (no backend dependency)
-    const lines = textInput.value.split(".").filter(t => t.trim()).slice(0, 5);
+    clearInterval(slideInterval);
+
+    const lines = textInput.value
+      .split(".")
+      .filter(t => t.trim())
+      .slice(0, 5);
 
     currentImages = lines.map(line => {
       return `https://image.pollinations.ai/prompt/${encodeURIComponent(
@@ -167,16 +174,22 @@ function startSlideshow(images) {
   const img = document.createElement("img");
   img.style.width = "100%";
   img.style.borderRadius = "10px";
+  img.style.transition = "opacity 0.5s";
 
   imageContainer.appendChild(img);
 
   function show() {
-    img.src = images[index];
-    index = (index + 1) % images.length;
+    img.style.opacity = 0;
+
+    setTimeout(() => {
+      img.src = images[index];
+      img.style.opacity = 1;
+      index = (index + 1) % images.length;
+    }, 300);
   }
 
   show();
-  setInterval(show, 3000);
+  slideInterval = setInterval(show, 3000);
 }
 
 // ================= 📥 IMAGE DOWNLOAD =================
@@ -197,11 +210,16 @@ function showDownloadImagesButton() {
   imageContainer.appendChild(btn);
 }
 
-// ================= 🎬 VIDEO (BASIC VERSION) =================
+// ================= 🎬 VIDEO =================
 function generateVideo() {
-  if (!currentImages.length) return alert("Generate images first!");
+  if (!currentImages.length) {
+    alert("Pehle images generate karo!");
+    return;
+  }
 
-  alert("⚠️ Video generation heavy hai → Render free pe fail hota hai.\nAbhi slideshow hi best option hai.");
+  alert(
+    "⚠️ Real video generation backend pe heavy hota hai.\nAbhi slideshow hi best free option hai."
+  );
 }
 
 // ================= 🌙 THEME =================
