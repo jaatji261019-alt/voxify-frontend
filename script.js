@@ -5,6 +5,7 @@ const voiceSelect = document.getElementById("voiceSelect");
 const languageSelect = document.getElementById("language");
 const player = document.getElementById("player");
 const imageContainer = document.getElementById("imageContainer");
+const fileInput = document.getElementById("fileInput");
 
 let voices = [];
 let currentAudioURL = null;
@@ -17,18 +18,16 @@ function detectLanguage(text) {
 
   if (/[\u0900-\u097F]/.test(text)) return "hi";
   if (/[\u0600-\u06FF]/.test(text)) return "ar";
+  if (/[\u4e00-\u9fff]/.test(text)) return "zh";
   return "en";
 }
 
 // ================= 🔥 LOAD VOICES =================
 function loadVoices() {
-  const v = speechSynthesis.getVoices();
-  if (!v.length) return;
-
-  voices = v;
+  voices = speechSynthesis.getVoices();
   voiceSelect.innerHTML = "";
 
-  v.forEach((voice, i) => {
+  voices.forEach((voice, i) => {
     const option = document.createElement("option");
     option.value = i;
     option.textContent = `${voice.name} (${voice.lang})`;
@@ -36,6 +35,38 @@ function loadVoices() {
   });
 }
 speechSynthesis.onvoiceschanged = loadVoices;
+
+// ================= 📄 FILE UPLOAD (PDF → TEXT) =================
+async function uploadFile() {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  loader.style.display = "block";
+
+  try {
+    const res = await fetch("https://voxify-ai.onrender.com/upload-file", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error);
+
+    textInput.value = data.text;
+
+    alert("✅ Text extracted successfully!");
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ File extract failed");
+  }
+
+  loader.style.display = "none";
+}
 
 // ================= 🔊 PREVIEW =================
 function preview() {
@@ -59,7 +90,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// ================= 🎧 AUDIO =================
+// ================= 🎧 AUDIO GENERATE =================
 async function generateAudio() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
@@ -75,7 +106,7 @@ async function generateAudio() {
       },
       body: JSON.stringify({
         text: textInput.value,
-        lang: lang
+        lang
       })
     });
 
@@ -83,7 +114,6 @@ async function generateAudio() {
 
     const blob = await res.blob();
 
-    // 🔥 empty audio fix
     if (blob.size < 1000) throw new Error("Empty audio");
 
     if (currentAudioURL) URL.revokeObjectURL(currentAudioURL);
@@ -98,8 +128,7 @@ async function generateAudio() {
   } catch (err) {
     console.error(err);
 
-    // fallback
-    alert("Server failed → using browser voice");
+    alert("⚠️ Server failed → using browser voice");
 
     const fallback = new SpeechSynthesisUtterance(textInput.value);
     fallback.lang = detectLanguage(textInput.value);
@@ -109,7 +138,7 @@ async function generateAudio() {
   loader.style.display = "none";
 }
 
-// ================= 📥 AUDIO DOWNLOAD =================
+// ================= 📥 DOWNLOAD AUDIO =================
 function downloadAudio() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
@@ -135,32 +164,25 @@ function stopAudio() {
 }
 
 // ================= 🖼 IMAGE GENERATION =================
-async function generateImages() {
+function generateImages() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
+  clearInterval(slideInterval);
   loader.style.display = "block";
 
-  try {
-    clearInterval(slideInterval);
+  const lines = textInput.value
+    .split(".")
+    .filter(t => t.trim())
+    .slice(0, 5);
 
-    const lines = textInput.value
-      .split(".")
-      .filter(t => t.trim())
-      .slice(0, 5);
+  currentImages = lines.map(line =>
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(
+      line + " cinematic lighting ultra realistic 4k"
+    )}`
+  );
 
-    currentImages = lines.map(line => {
-      return `https://image.pollinations.ai/prompt/${encodeURIComponent(
-        line + " cinematic lighting ultra realistic 4k"
-      )}`;
-    });
-
-    startSlideshow(currentImages);
-    showDownloadImagesButton();
-
-  } catch (err) {
-    console.error(err);
-    alert("Image generation failed ❌");
-  }
+  startSlideshow(currentImages);
+  showDownloadImagesButton();
 
   loader.style.display = "none";
 }
@@ -174,18 +196,12 @@ function startSlideshow(images) {
   const img = document.createElement("img");
   img.style.width = "100%";
   img.style.borderRadius = "10px";
-  img.style.transition = "opacity 0.5s";
 
   imageContainer.appendChild(img);
 
   function show() {
-    img.style.opacity = 0;
-
-    setTimeout(() => {
-      img.src = images[index];
-      img.style.opacity = 1;
-      index = (index + 1) % images.length;
-    }, 300);
+    img.src = images[index];
+    index = (index + 1) % images.length;
   }
 
   show();
@@ -217,9 +233,7 @@ function generateVideo() {
     return;
   }
 
-  alert(
-    "⚠️ Real video generation backend pe heavy hota hai.\nAbhi slideshow hi best free option hai."
-  );
+  alert("⚠️ Free version → slideshow hi best hai");
 }
 
 // ================= 🌙 THEME =================
