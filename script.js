@@ -8,6 +8,7 @@ const imageContainer = document.getElementById("imageContainer");
 const fileInput = document.getElementById("fileInput");
 
 let voices = [];
+let apiVoices = [];
 let currentAudioURL = null;
 let currentImages = [];
 let slideInterval = null;
@@ -22,8 +23,31 @@ function detectLanguage(text) {
   return "en";
 }
 
-// ================= 🔥 LOAD VOICES =================
-function loadVoices() {
+// ================= 🔥 LOAD VOICES (API + Browser) =================
+async function loadVoicesAPI() {
+  try {
+    const res = await fetch("https://your-python-tts.onrender.com/voices");
+    const data = await res.json();
+
+    apiVoices = data;
+
+    voiceSelect.innerHTML = "";
+
+    data.slice(0, 50).forEach(v => {
+      const option = document.createElement("option");
+      option.value = v.name;
+      option.textContent = `${v.friendly} (${v.gender})`;
+      voiceSelect.appendChild(option);
+    });
+
+  } catch (err) {
+    console.log("API voice load failed → using browser voices");
+    loadBrowserVoices();
+  }
+}
+
+// fallback
+function loadBrowserVoices() {
   voices = speechSynthesis.getVoices();
   voiceSelect.innerHTML = "";
 
@@ -34,9 +58,10 @@ function loadVoices() {
     voiceSelect.appendChild(option);
   });
 }
-speechSynthesis.onvoiceschanged = loadVoices;
 
-// ================= 📄 FILE UPLOAD (PDF → TEXT) =================
+speechSynthesis.onvoiceschanged = loadBrowserVoices;
+
+// ================= 📄 FILE UPLOAD =================
 async function uploadFile() {
   const file = fileInput.files[0];
   if (!file) return;
@@ -53,15 +78,12 @@ async function uploadFile() {
     });
 
     const data = await res.json();
-
     if (!res.ok) throw new Error(data.error);
 
     textInput.value = data.text;
-
-    alert("✅ Text extracted successfully!");
+    alert("✅ Text extracted!");
 
   } catch (err) {
-    console.error(err);
     alert("❌ File extract failed");
   }
 
@@ -72,18 +94,16 @@ async function uploadFile() {
 function preview() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
-  const utterance = new SpeechSynthesisUtterance(textInput.value);
-  const selectedVoice = voices[voiceSelect.value];
+  // API voice preview not possible → fallback browser
+  const utter = new SpeechSynthesisUtterance(textInput.value);
 
-  if (selectedVoice) {
-    utterance.voice = selectedVoice;
-    utterance.lang = selectedVoice.lang;
-  } else {
-    utterance.lang = detectLanguage(textInput.value);
+  const selected = voices[voiceSelect.value];
+  if (selected) {
+    utter.voice = selected;
   }
 
   speechSynthesis.cancel();
-  speechSynthesis.speak(utterance);
+  speechSynthesis.speak(utter);
 }
 
 function stopPreview() {
@@ -97,48 +117,60 @@ async function generateAudio() {
   loader.style.display = "block";
 
   try {
-    const lang = detectLanguage(textInput.value);
+    const selectedVoice = voiceSelect.value;
 
-    const res = await fetch("https://voxify-ai.onrender.com/tts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: textInput.value,
-        lang
-      })
-    });
+    let res;
 
-    if (!res.ok) throw new Error("TTS failed");
+    // 🔥 if API voice selected
+    if (apiVoices.length) {
+      res = await fetch("https://your-python-tts.onrender.com/tts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          text: textInput.value,
+          voice: selectedVoice
+        })
+      });
+    } else {
+      // fallback old backend
+      res = await fetch("https://voxify-ai.onrender.com/tts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          text: textInput.value,
+          lang: detectLanguage(textInput.value)
+        })
+      });
+    }
+
+    if (!res.ok) throw new Error();
 
     const blob = await res.blob();
 
-    if (blob.size < 1000) throw new Error("Empty audio");
-
     if (currentAudioURL) URL.revokeObjectURL(currentAudioURL);
-
     currentAudioURL = URL.createObjectURL(blob);
 
     player.src = currentAudioURL;
     player.style.display = "block";
 
-    await player.play().catch(() => {});
+    await player.play();
 
   } catch (err) {
-    console.error(err);
-
-    alert("⚠️ Server failed → using browser voice");
+    console.log(err);
+    alert("⚠️ Using browser voice");
 
     const fallback = new SpeechSynthesisUtterance(textInput.value);
-    fallback.lang = detectLanguage(textInput.value);
     speechSynthesis.speak(fallback);
   }
 
   loader.style.display = "none";
 }
 
-// ================= 📥 DOWNLOAD AUDIO =================
+// ================= 📥 DOWNLOAD =================
 function downloadAudio() {
   if (!currentAudioURL) return alert("Generate audio first!");
 
@@ -149,41 +181,24 @@ function downloadAudio() {
 }
 
 // ================= 🎧 CONTROLS =================
-function playAudio() {
-  if (!player.src) return alert("Generate audio first!");
-  player.play();
-}
+function playAudio() { player.play(); }
+function pauseAudio() { player.pause(); }
+function stopAudio() { player.pause(); player.currentTime = 0; }
 
-function pauseAudio() {
-  player.pause();
-}
-
-function stopAudio() {
-  player.pause();
-  player.currentTime = 0;
-}
-
-// ================= 🖼 IMAGE GENERATION =================
+// ================= 🖼 IMAGE =================
 function generateImages() {
   if (!textInput.value.trim()) return alert("Enter text!");
 
   clearInterval(slideInterval);
   loader.style.display = "block";
 
-  const lines = textInput.value
-    .split(".")
-    .filter(t => t.trim())
-    .slice(0, 5);
+  const lines = textInput.value.split(".").filter(t => t.trim()).slice(0, 5);
 
   currentImages = lines.map(line =>
-    `https://image.pollinations.ai/prompt/${encodeURIComponent(
-      line + " cinematic lighting ultra realistic 4k"
-    )}`
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(line + " cinematic lighting 4k")}`
   );
 
   startSlideshow(currentImages);
-  showDownloadImagesButton();
-
   loader.style.display = "none";
 }
 
@@ -192,10 +207,7 @@ function startSlideshow(images) {
   imageContainer.innerHTML = "";
 
   let index = 0;
-
   const img = document.createElement("img");
-  img.style.width = "100%";
-  img.style.borderRadius = "10px";
 
   imageContainer.appendChild(img);
 
@@ -209,87 +221,60 @@ function startSlideshow(images) {
 }
 
 // ================= 📥 IMAGE DOWNLOAD =================
-function showDownloadImagesButton() {
-  const btn = document.createElement("button");
-  btn.innerText = "⬇ Download Images";
-  btn.style.marginTop = "10px";
-
-  btn.onclick = () => {
-    currentImages.forEach((url, i) => {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `image_${i}.jpg`;
-      a.click();
-    });
-  };
-
-  imageContainer.appendChild(btn);
+function downloadImages() {
+  currentImages.forEach((url, i) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `image_${i}.jpg`;
+    a.click();
+  });
 }
 
 // ================= 🎬 VIDEO =================
 function generateVideo() {
-  if (!currentImages.length) {
-    alert("Pehle images generate karo!");
-    return;
-  }
-
-  alert("⚠️ Free version → slideshow hi best hai");
+  alert("⚠️ Free version = slideshow only");
 }
 
 // ================= 🌙 THEME =================
 document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light");
 };
-// ================= 🔗 SHARE SYSTEM =================
 
+// ================= 🔗 SHARE =================
 const shareURL = window.location.href;
-const shareText = "🔥 Free AI Tool! Text → Audio, Images & Video 😱 Try now:";
+const shareText = "🔥 Free AI Tool! Try Voxify AI:";
 
-// 🟢 WhatsApp
 function shareWhatsApp() {
-  window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareURL)}`, "_blank");
+  window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareURL)}`);
 }
 
-// 🔵 Telegram
 function shareTelegram() {
-  window.open(`https://t.me/share/url?url=${encodeURIComponent(shareURL)}&text=${encodeURIComponent(shareText)}`, "_blank");
+  window.open(`https://t.me/share/url?url=${encodeURIComponent(shareURL)}&text=${encodeURIComponent(shareText)}`);
 }
 
-// 🐦 Twitter
 function shareTwitter() {
-  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareURL)}`, "_blank");
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareURL)}`);
 }
 
-// 📘 Facebook
 function shareFacebook() {
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareURL)}`, "_blank");
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareURL)}`);
 }
 
-// 📌 Pinterest (🔥 IMAGE BASED)
 function sharePinterest() {
-  const image = currentImages[0] || "https://via.placeholder.com/300";
-
-  window.open(
-    `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareURL)}&media=${encodeURIComponent(image)}&description=${encodeURIComponent(shareText)}`,
-    "_blank"
-  );
+  const image = currentImages[0] || "";
+  window.open(`https://pinterest.com/pin/create/button/?url=${shareURL}&media=${image}&description=${shareText}`);
 }
 
-// 📤 Native Share (mobile best)
 function shareApp() {
   if (navigator.share) {
-    navigator.share({
-      title: "Voxify AI 🎙",
-      text: shareText,
-      url: shareURL
-    }).catch(err => console.log(err));
-  } else {
-    alert("Use other share buttons 👇");
+    navigator.share({ title: "Voxify AI", text: shareText, url: shareURL });
   }
 }
 
-// 📋 Copy Link
 function copyLink() {
   navigator.clipboard.writeText(shareURL);
-  alert("Link copied ✅");
+  alert("Copied ✅");
 }
+
+// ================= INIT =================
+loadVoicesAPI();
