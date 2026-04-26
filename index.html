@@ -18,7 +18,7 @@
 
     <!-- 🔥 HEADER -->
     <div class="header">
-      <div>
+      <div class="header-left">
         <h1>🎙 Voxify AI</h1>
         <div class="tagline">JAATJI'S WORLD</div>
       </div>
@@ -94,7 +94,6 @@
         <button onclick="downloadImages()">⬇ Download Images</button>
       </div>
 
-      <!-- 🖼 OUTPUT -->
       <div id="imageContainer"></div>
 
     </div>
@@ -116,8 +115,31 @@
         <button onclick="downloadVideo()">⬇ Download Video</button>
       </div>
 
-      <!-- 🎬 VIDEO PLAYER -->
-      <video id="videoPlayer" controls style="width:100%; display:none; margin-top:10px;"></video>
+      <video id="videoPlayer" controls style="width:100%; display:none;"></video>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- 🔗 SHARE SECTION (FULL) -->
+    <!-- ========================= -->
+    <div class="section">
+
+      <h2>🚀 Share Voxify AI</h2>
+
+      <p class="info">🔥 Share karo aur app ko viral banao</p>
+
+      <div class="buttons">
+
+        <button onclick="shareWhatsApp()">🟢 WhatsApp</button>
+        <button onclick="shareTelegram()">🔵 Telegram</button>
+        <button onclick="shareTwitter()">🐦 Twitter</button>
+        <button onclick="shareFacebook()">📘 Facebook</button>
+
+        <button onclick="sharePinterest()">📌 Pinterest</button>
+        <button onclick="shareApp()">📤 More</button>
+        <button onclick="copyLink()">📋 Copy Link</button>
+
+      </div>
 
     </div>
 
