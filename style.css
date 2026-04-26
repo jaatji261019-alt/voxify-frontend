@@ -12,7 +12,8 @@ body {
   color: #fff;
   display: flex;
   justify-content: center;
-  padding: 20px;
+  padding: 15px;
+  transition: all 0.3s ease;
 }
 
 /* ☀️ LIGHT MODE */
@@ -24,19 +25,20 @@ body.light {
 /* 📦 CONTAINER */
 .container {
   width: 100%;
-  max-width: 600px;
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(15px);
-  padding: 20px;
-  border-radius: 18px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  max-width: 650px;
+  background: rgba(30, 41, 59, 0.75);
+  backdrop-filter: blur(18px);
+  padding: 18px;
+  border-radius: 20px;
+  box-shadow: 0 15px 50px rgba(0,0,0,0.6);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 body.light .container {
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.85);
 }
 
 /* 🔥 HEADER */
@@ -53,34 +55,47 @@ body.light .container {
 
 /* 🏷 TAGLINE */
 .tagline {
-  font-size: 12px;
-  opacity: 0.7;
-  margin-top: -5px;
+  font-size: 11px;
+  opacity: 0.6;
 }
 
-/* 🌙 THEME BUTTON (SMALL) */
+/* 🌙 THEME BUTTON */
 #themeToggle {
   border: none;
-  padding: 4px 8px;
-  border-radius: 8px;
+  padding: 5px 9px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 12px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
 }
 
-/* 📦 SECTION */
+body.light #themeToggle {
+  background: #ddd;
+  color: #000;
+}
+
+/* 📦 SECTION CARD */
 .section {
-  background: rgba(255,255,255,0.06);
-  padding: 15px;
+  background: rgba(255,255,255,0.05);
+  padding: 14px;
   border-radius: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  transition: 0.3s;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.section:hover {
+  transform: translateY(-2px);
 }
 
 body.light .section {
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 
+/* 🎯 TITLE */
 .section h2 {
   font-size: 15px;
   font-weight: 500;
@@ -96,8 +111,13 @@ textarea {
   outline: none;
   resize: none;
   font-size: 14px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.25);
   color: #fff;
+  transition: 0.2s;
+}
+
+textarea:focus {
+  box-shadow: 0 0 0 2px #00ffcc55;
 }
 
 body.light textarea {
@@ -112,13 +132,21 @@ body.light textarea {
   gap: 8px;
 }
 
-/* 🔽 SMALL SELECT (language + voice) */
+/* 🔽 SELECT */
 select {
   flex: 1;
-  padding: 6px;
+  padding: 7px;
   border-radius: 8px;
   border: none;
   font-size: 12px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+body.light select {
+  background: #fff;
+  color: #000;
+  border: 1px solid #ccc;
 }
 
 /* 🔘 BUTTONS */
@@ -143,13 +171,18 @@ button {
 
 button:hover {
   transform: scale(1.05);
-  box-shadow: 0 5px 15px rgba(0,255,200,0.3);
+  box-shadow: 0 8px 20px rgba(0,255,200,0.3);
+}
+
+button:active {
+  transform: scale(0.97);
 }
 
 /* 🎧 AUDIO */
 audio {
   width: 100%;
-  border-radius: 8px;
+  border-radius: 10px;
+  margin-top: 5px;
 }
 
 /* 🖼 IMAGE CONTAINER */
@@ -163,15 +196,28 @@ audio {
   gap: 10px;
 }
 
+/* 🖼 IMAGE STYLE */
 #imageContainer img {
   width: 100%;
   border-radius: 12px;
   object-fit: cover;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  transition: transform 0.3s;
+}
+
+#imageContainer img:hover {
+  transform: scale(1.02);
+}
+
+/* 🎬 VIDEO */
+video {
+  border-radius: 12px;
+  margin-top: 10px;
 }
 
 /* 🔄 LOADER */
 .loader {
-  border: 4px solid #333;
+  border: 4px solid rgba(255,255,255,0.2);
   border-top: 4px solid #00ffcc;
   border-radius: 50%;
   width: 28px;
@@ -187,11 +233,11 @@ audio {
   }
 }
 
-/* 📊 PROGRESS */
+/* 📊 PROGRESS BAR */
 #progressContainer {
   width: 100%;
   height: 8px;
-  background: #222;
+  background: rgba(255,255,255,0.1);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -200,16 +246,22 @@ audio {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #00ffcc, #00ffaa);
-  transition: width 0.3s;
+  transition: width 0.4s ease;
 }
 
+/* 📊 TEXT */
 #progressText {
   font-size: 12px;
   text-align: center;
+  opacity: 0.8;
 }
 
-/* 📱 MOBILE */
+/* 📱 MOBILE OPTIMIZATION */
 @media (max-width: 500px) {
+  .container {
+    padding: 12px;
+  }
+
   button {
     font-size: 11px;
     padding: 7px;
@@ -217,5 +269,9 @@ audio {
 
   textarea {
     height: 90px;
+  }
+
+  .section h2 {
+    font-size: 14px;
   }
 }
