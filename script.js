@@ -240,3 +240,56 @@ function generateVideo() {
 document.getElementById("themeToggle").onclick = () => {
   document.body.classList.toggle("light");
 };
+// ================= 🔗 SHARE SYSTEM =================
+
+const shareURL = window.location.href;
+const shareText = "🔥 Free AI Tool! Text → Audio, Images & Video 😱 Try now:";
+
+// 🟢 WhatsApp
+function shareWhatsApp() {
+  window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareURL)}`, "_blank");
+}
+
+// 🔵 Telegram
+function shareTelegram() {
+  window.open(`https://t.me/share/url?url=${encodeURIComponent(shareURL)}&text=${encodeURIComponent(shareText)}`, "_blank");
+}
+
+// 🐦 Twitter
+function shareTwitter() {
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareURL)}`, "_blank");
+}
+
+// 📘 Facebook
+function shareFacebook() {
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareURL)}`, "_blank");
+}
+
+// 📌 Pinterest (🔥 IMAGE BASED)
+function sharePinterest() {
+  const image = currentImages[0] || "https://via.placeholder.com/300";
+
+  window.open(
+    `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareURL)}&media=${encodeURIComponent(image)}&description=${encodeURIComponent(shareText)}`,
+    "_blank"
+  );
+}
+
+// 📤 Native Share (mobile best)
+function shareApp() {
+  if (navigator.share) {
+    navigator.share({
+      title: "Voxify AI 🎙",
+      text: shareText,
+      url: shareURL
+    }).catch(err => console.log(err));
+  } else {
+    alert("Use other share buttons 👇");
+  }
+}
+
+// 📋 Copy Link
+function copyLink() {
+  navigator.clipboard.writeText(shareURL);
+  alert("Link copied ✅");
+}
