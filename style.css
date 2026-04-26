@@ -12,7 +12,7 @@ body {
   color: #fff;
   display: flex;
   justify-content: center;
-  padding: 15px;
+  padding: 12px;
   transition: all 0.3s ease;
 }
 
@@ -28,46 +28,54 @@ body.light {
   max-width: 650px;
   background: rgba(30, 41, 59, 0.75);
   backdrop-filter: blur(18px);
-  padding: 18px;
-  border-radius: 20px;
-  box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+  padding: 16px;
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   border: 1px solid rgba(255,255,255,0.08);
 }
 
 body.light .container {
-  background: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.9);
 }
 
-/* 🔥 HEADER */
+/* 🔥 HEADER (FIXED) */
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start; /* 🔥 TOP ALIGN */
+  gap: 10px;
+}
+
+.header div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1; /* 🔥 tight */
 }
 
 .header h1 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 
-/* 🏷 TAGLINE */
 .tagline {
-  font-size: 11px;
+  font-size: 10px;
   opacity: 0.6;
 }
 
-/* 🌙 THEME BUTTON */
+/* 🌙 SMALL THEME BUTTON */
 #themeToggle {
   border: none;
-  padding: 5px 9px;
-  border-radius: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
+  height: 26px;
   background: rgba(255,255,255,0.1);
   color: #fff;
+  align-self: flex-start;
 }
 
 body.light #themeToggle {
@@ -75,16 +83,16 @@ body.light #themeToggle {
   color: #000;
 }
 
-/* 📦 SECTION CARD */
+/* 📦 SECTION */
 .section {
   background: rgba(255,255,255,0.05);
-  padding: 14px;
-  border-radius: 14px;
+  padding: 12px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: 0.3s;
   border: 1px solid rgba(255,255,255,0.05);
+  transition: 0.3s;
 }
 
 .section:hover {
@@ -97,23 +105,22 @@ body.light .section {
 
 /* 🎯 TITLE */
 .section h2 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 /* ✍️ TEXTAREA */
 textarea {
   width: 100%;
-  height: 110px;
-  padding: 12px;
-  border-radius: 12px;
+  height: 100px;
+  padding: 10px;
+  border-radius: 10px;
   border: none;
   outline: none;
   resize: none;
-  font-size: 14px;
+  font-size: 13px;
   background: rgba(0,0,0,0.25);
   color: #fff;
-  transition: 0.2s;
 }
 
 textarea:focus {
@@ -129,16 +136,16 @@ body.light textarea {
 /* 🎚 CONTROLS */
 .controls {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* 🔽 SELECT */
 select {
   flex: 1;
-  padding: 7px;
-  border-radius: 8px;
+  padding: 6px;
+  border-radius: 7px;
   border: none;
-  font-size: 12px;
+  font-size: 11px;
   background: rgba(255,255,255,0.1);
   color: #fff;
 }
@@ -153,75 +160,68 @@ body.light select {
 .buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 button {
   flex: 1;
-  padding: 9px;
+  padding: 8px;
   border: none;
-  border-radius: 10px;
+  border-radius: 9px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   background: linear-gradient(135deg, #00ffcc, #00ffaa);
   color: #000;
   font-weight: 500;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(0,255,200,0.3);
+  transform: scale(1.04);
+  box-shadow: 0 6px 18px rgba(0,255,200,0.3);
 }
 
 button:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 /* 🎧 AUDIO */
 audio {
   width: 100%;
   border-radius: 10px;
-  margin-top: 5px;
 }
 
-/* 🖼 IMAGE CONTAINER */
+/* 🖼 IMAGE */
 #imageContainer {
   width: 100%;
-  min-height: 180px;
-  border-radius: 12px;
+  min-height: 160px;
+  border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* 🖼 IMAGE STYLE */
 #imageContainer img {
   width: 100%;
-  border-radius: 12px;
+  border-radius: 10px;
   object-fit: cover;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-  transition: transform 0.3s;
-}
-
-#imageContainer img:hover {
-  transform: scale(1.02);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.5);
 }
 
 /* 🎬 VIDEO */
 video {
-  border-radius: 12px;
-  margin-top: 10px;
+  border-radius: 10px;
+  margin-top: 8px;
 }
 
 /* 🔄 LOADER */
 .loader {
-  border: 4px solid rgba(255,255,255,0.2);
-  border-top: 4px solid #00ffcc;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top: 3px solid #00ffcc;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   animation: spin 1s linear infinite;
   margin: auto;
   display: none;
@@ -233,45 +233,38 @@ video {
   }
 }
 
-/* 📊 PROGRESS BAR */
+/* 📊 PROGRESS */
 #progressContainer {
   width: 100%;
-  height: 8px;
+  height: 6px;
   background: rgba(255,255,255,0.1);
   border-radius: 10px;
-  overflow: hidden;
 }
 
 #progressBar {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #00ffcc, #00ffaa);
-  transition: width 0.4s ease;
 }
 
-/* 📊 TEXT */
 #progressText {
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
   opacity: 0.8;
 }
 
-/* 📱 MOBILE OPTIMIZATION */
+/* 📱 MOBILE */
 @media (max-width: 500px) {
   .container {
-    padding: 12px;
+    padding: 10px;
   }
 
   button {
-    font-size: 11px;
-    padding: 7px;
+    font-size: 10px;
+    padding: 6px;
   }
 
   textarea {
-    height: 90px;
-  }
-
-  .section h2 {
-    font-size: 14px;
+    height: 80px;
   }
 }
