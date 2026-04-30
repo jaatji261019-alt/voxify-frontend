@@ -1,7 +1,7 @@
 // ================= CONFIG =================
 const PYTHON_API = "https://voxify-python-api.onrender.com";
 const NODE_API = "https://voxify-ai.onrender.com";
-const VIDEO_API = "https://voxify-cinematic-api.onrender.com"; // 🎬 NEW
+const VIDEO_API = "https://voxify-cinematic-api.onrender.com";
 
 // ================= ELEMENTS =================
 const loader = document.getElementById("loader");
@@ -18,13 +18,13 @@ const fileInput = document.getElementById("fileInput");
 let voices = [];
 let apiVoices = [];
 let currentAudioURL = null;
+let uploadedAudioURL = null; // 🔥 FIX
 let currentImages = [];
 let slideInterval = null;
 
 // ================= LANGUAGE =================
 function detectLanguage(text) {
   if (languageSelect.value !== "auto") return languageSelect.value;
-
   if (/[\u0900-\u097F]/.test(text)) return "hi";
   if (/[\u0600-\u06FF]/.test(text)) return "ar";
   return "en";
@@ -34,13 +34,9 @@ function detectLanguage(text) {
 async function loadVoicesAPI() {
   try {
     const res = await fetch(`${PYTHON_API}/voices`);
-    const data = await res.json();
-
-    apiVoices = data;
+    apiVoices = await res.json();
     filterVoices();
-
   } catch {
-    console.log("⚠️ API failed → browser voices");
     loadBrowserVoices();
   }
 }
@@ -60,107 +56,28 @@ function filterVoices() {
   }
 
   if (languageSelect.value !== "auto") {
-    filtered = filtered.filter(v =>
-      v.lang.startsWith(languageSelect.value)
-    );
+    filtered = filtered.filter(v => v.lang.startsWith(languageSelect.value));
   }
 
   filtered.slice(0, 50).forEach(v => {
-    const option = document.createElement("option");
-    option.value = v.name;
-    option.textContent = `${v.friendly}`;
-    voiceSelect.appendChild(option);
+    const opt = document.createElement("option");
+    opt.value = v.name;
+    opt.textContent = v.friendly;
+    voiceSelect.appendChild(opt);
   });
-
-  if (!filtered.length) {
-    voiceSelect.innerHTML = `<option>No voices</option>`;
-  }
 }
-
-// ================= EVENTS =================
-voiceType.addEventListener("change", filterVoices);
-languageSelect.addEventListener("change", filterVoices);
 
 // ================= FALLBACK =================
 function loadBrowserVoices() {
   voices = speechSynthesis.getVoices();
   voiceSelect.innerHTML = "";
 
-  voices.forEach((voice, i) => {
-    const option = document.createElement("option");
-    option.value = i;
-    option.textContent = voice.name;
-    voiceSelect.appendChild(option);
+  voices.forEach((v, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = v.name;
+    voiceSelect.appendChild(opt);
   });
-}
-
-speechSynthesis.onvoiceschanged = loadBrowserVoices;
-
-// ================= FILE =================
-async function uploadFile() {
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  loader.style.display = "block";
-
-  try {
-    const res = await fetch(`${NODE_API}/upload-file`, {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-    textInput.value = data.text;
-
-  } catch {
-    alert("❌ File failed");
-  }
-
-  loader.style.display = "none";
-}
-
-// ================= PREVIEW =================
-function preview() {
-  const text = textInput.value.trim();
-  if (!text) return alert("Enter text!");
-
-  const utter = new SpeechSynthesisUtterance(text);
-
-  const selected = voices[voiceSelect.value];
-  if (selected) utter.voice = selected;
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utter);
-}
-
-function stopPreview() {
-  speechSynthesis.cancel();
-}
-
-// ================= STYLE =================
-function getPitch() {
-  switch (voiceStyle.value) {
-    case "deep": return "-20Hz";
-    case "soft": return "+10Hz";
-    case "sad": return "-10Hz";
-    case "angry": return "+15Hz";
-    case "story": return "+5Hz";
-    default: return "0Hz";
-  }
-}
-
-function getRate() {
-  switch (voiceStyle.value) {
-    case "deep": return "-10%";
-    case "soft": return "-5%";
-    case "sad": return "-20%";
-    case "angry": return "+15%";
-    case "story": return "-10%";
-    default: return "0%";
-  }
 }
 
 // ================= AUDIO =================
@@ -186,6 +103,7 @@ async function generateAudio() {
 
     const blob = await res.blob();
 
+    // 🔥 local preview
     if (currentAudioURL) URL.revokeObjectURL(currentAudioURL);
     currentAudioURL = URL.createObjectURL(blob);
 
@@ -193,8 +111,21 @@ async function generateAudio() {
     player.style.display = "block";
     player.play();
 
-  } catch {
-    alert("⚠️ Audio failed");
+    // 🔥 UPLOAD AUDIO (IMPORTANT FIX)
+    const formData = new FormData();
+    formData.append("file", blob, "audio.mp3");
+
+    const uploadRes = await fetch(`${NODE_API}/upload-audio`, {
+      method: "POST",
+      body: formData
+    });
+
+    const uploadData = await uploadRes.json();
+    uploadedAudioURL = uploadData.url; // 🔥 real URL
+
+  } catch (err) {
+    console.log(err);
+    alert("Audio failed");
   }
 
   loader.style.display = "none";
@@ -203,7 +134,8 @@ async function generateAudio() {
 // ================= VIDEO =================
 async function generateVideo() {
   const text = textInput.value.trim();
-  if (!text || !currentAudioURL) {
+
+  if (!text || !uploadedAudioURL) {
     return alert("Generate audio first!");
   }
 
@@ -216,8 +148,8 @@ async function generateVideo() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        text: text,
-        audioUrl: currentAudioURL
+        text,
+        audioUrl: uploadedAudioURL // 🔥 FIXED
       })
     });
 
@@ -230,51 +162,33 @@ async function generateVideo() {
 
   } catch (err) {
     console.log(err);
-    alert("❌ Video failed");
+    alert("Video failed");
   }
 
   loader.style.display = "none";
 }
 
-function downloadVideo() {
-  if (!videoPlayer.src) return alert("Generate video first");
-
-  const a = document.createElement("a");
-  a.href = videoPlayer.src;
-  a.download = "voxify-video.mp4";
-  a.click();
-}
-
-// ================= IMAGES =================
-function generateImages() {
-  const text = textInput.value.trim();
-  if (!text) return;
-
-  clearInterval(slideInterval);
-
-  const lines = text.split(".").filter(t => t.trim()).slice(0, 5);
-
-  currentImages = lines.map(line =>
-    `https://image.pollinations.ai/prompt/${encodeURIComponent(line + " cinematic 4k")}`
-  );
-
-  startSlideshow(currentImages);
-}
-
-function startSlideshow(images) {
-  imageContainer.innerHTML = "";
-
-  let index = 0;
-  const img = document.createElement("img");
-  imageContainer.appendChild(img);
-
-  function show() {
-    img.src = images[index];
-    index = (index + 1) % images.length;
+// ================= STYLE =================
+function getPitch() {
+  switch (voiceStyle.value) {
+    case "deep": return "-20Hz";
+    case "soft": return "+10Hz";
+    case "sad": return "-10Hz";
+    case "angry": return "+15Hz";
+    case "story": return "+5Hz";
+    default: return "0Hz";
   }
+}
 
-  show();
-  slideInterval = setInterval(show, 3000);
+function getRate() {
+  switch (voiceStyle.value) {
+    case "deep": return "-10%";
+    case "soft": return "-5%";
+    case "sad": return "-20%";
+    case "angry": return "+15%";
+    case "story": return "-10%";
+    default: return "0%";
+  }
 }
 
 // ================= INIT =================
