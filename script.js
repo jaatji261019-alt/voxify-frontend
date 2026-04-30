@@ -1,15 +1,17 @@
 // ================= CONFIG =================
 const PYTHON_API = "https://voxify-python-api.onrender.com";
 const NODE_API = "https://voxify-ai.onrender.com";
+const VIDEO_API = "https://voxify-cinematic-api.onrender.com"; // 🎬 NEW
 
 // ================= ELEMENTS =================
 const loader = document.getElementById("loader");
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
 const voiceType = document.getElementById("voiceType");
-const voiceStyle = document.getElementById("voiceStyle"); // 🔥 NEW
+const voiceStyle = document.getElementById("voiceStyle");
 const languageSelect = document.getElementById("language");
 const player = document.getElementById("player");
+const videoPlayer = document.getElementById("videoPlayer");
 const imageContainer = document.getElementById("imageContainer");
 const fileInput = document.getElementById("fileInput");
 
@@ -38,17 +40,17 @@ async function loadVoicesAPI() {
     filterVoices();
 
   } catch {
+    console.log("⚠️ API failed → browser voices");
     loadBrowserVoices();
   }
 }
 
-// ================= FILTER VOICES =================
+// ================= FILTER =================
 function filterVoices() {
   voiceSelect.innerHTML = "";
 
   let filtered = [...apiVoices];
 
-  // TYPE
   if (voiceType.value === "male") {
     filtered = filtered.filter(v => v.gender === "Male");
   } else if (voiceType.value === "female") {
@@ -57,7 +59,6 @@ function filterVoices() {
     filtered = filtered.filter(v => v.name.includes("Neural"));
   }
 
-  // LANGUAGE
   if (languageSelect.value !== "auto") {
     filtered = filtered.filter(v =>
       v.lang.startsWith(languageSelect.value)
@@ -72,7 +73,7 @@ function filterVoices() {
   });
 
   if (!filtered.length) {
-    voiceSelect.innerHTML = `<option>No voices found</option>`;
+    voiceSelect.innerHTML = `<option>No voices</option>`;
   }
 }
 
@@ -80,7 +81,7 @@ function filterVoices() {
 voiceType.addEventListener("change", filterVoices);
 languageSelect.addEventListener("change", filterVoices);
 
-// ================= FALLBACK VOICES =================
+// ================= FALLBACK =================
 function loadBrowserVoices() {
   voices = speechSynthesis.getVoices();
   voiceSelect.innerHTML = "";
@@ -88,17 +89,17 @@ function loadBrowserVoices() {
   voices.forEach((voice, i) => {
     const option = document.createElement("option");
     option.value = i;
-    option.textContent = `${voice.name}`;
+    option.textContent = voice.name;
     voiceSelect.appendChild(option);
   });
 }
 
 speechSynthesis.onvoiceschanged = loadBrowserVoices;
 
-// ================= FILE UPLOAD =================
+// ================= FILE =================
 async function uploadFile() {
   const file = fileInput.files[0];
-  if (!file) return alert("Select file!");
+  if (!file) return;
 
   const formData = new FormData();
   formData.append("file", file);
@@ -139,65 +140,7 @@ function stopPreview() {
   speechSynthesis.cancel();
 }
 
-// ================= AUDIO GENERATE =================
-async function generateAudio() {
-  const text = textInput.value.trim();
-  if (!text) return alert("Enter text!");
-
-  loader.style.display = "block";
-
-  try {
-    let res;
-
-    if (apiVoices.length) {
-      const selectedVoice = voiceSelect.value || "en-US-AriaNeural";
-
-      res = await fetch(`${PYTHON_API}/tts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          text: text,
-          voice: selectedVoice,
-          pitch: getPitch(),
-          rate: getRate()
-        })
-      });
-
-    } else {
-      res = await fetch(`${NODE_API}/tts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          text: text,
-          lang: detectLanguage(text)
-        })
-      });
-    }
-
-    if (!res.ok) throw new Error();
-
-    const blob = await res.blob();
-
-    if (currentAudioURL) URL.revokeObjectURL(currentAudioURL);
-    currentAudioURL = URL.createObjectURL(blob);
-
-    player.src = currentAudioURL;
-    player.style.display = "block";
-    player.play();
-
-  } catch {
-    const fallback = new SpeechSynthesisUtterance(text);
-    speechSynthesis.speak(fallback);
-  }
-
-  loader.style.display = "none";
-}
-
-// ================= STYLE LOGIC =================
+// ================= STYLE =================
 function getPitch() {
   switch (voiceStyle.value) {
     case "deep": return "-20Hz";
@@ -220,28 +163,92 @@ function getRate() {
   }
 }
 
-// ================= DOWNLOAD =================
-function downloadAudio() {
-  if (!currentAudioURL) return alert("Generate first");
+// ================= AUDIO =================
+async function generateAudio() {
+  const text = textInput.value.trim();
+  if (!text) return alert("Enter text!");
 
-  const a = document.createElement("a");
-  a.href = currentAudioURL;
-  a.download = "voxify.mp3";
-  a.click();
+  loader.style.display = "block";
+
+  try {
+    const res = await fetch(`${PYTHON_API}/tts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text,
+        voice: voiceSelect.value || "en-US-AriaNeural",
+        pitch: getPitch(),
+        rate: getRate()
+      })
+    });
+
+    const blob = await res.blob();
+
+    if (currentAudioURL) URL.revokeObjectURL(currentAudioURL);
+    currentAudioURL = URL.createObjectURL(blob);
+
+    player.src = currentAudioURL;
+    player.style.display = "block";
+    player.play();
+
+  } catch {
+    alert("⚠️ Audio failed");
+  }
+
+  loader.style.display = "none";
 }
 
-// ================= AUDIO CONTROL =================
-function playAudio() { player.play(); }
-function pauseAudio() { player.pause(); }
-function stopAudio() {
-  player.pause();
-  player.currentTime = 0;
+// ================= VIDEO =================
+async function generateVideo() {
+  const text = textInput.value.trim();
+  if (!text || !currentAudioURL) {
+    return alert("Generate audio first!");
+  }
+
+  loader.style.display = "block";
+
+  try {
+    const res = await fetch(`${VIDEO_API}/cinematic`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: text,
+        audioUrl: currentAudioURL
+      })
+    });
+
+    const blob = await res.blob();
+    const videoURL = URL.createObjectURL(blob);
+
+    videoPlayer.src = videoURL;
+    videoPlayer.style.display = "block";
+    videoPlayer.play();
+
+  } catch (err) {
+    console.log(err);
+    alert("❌ Video failed");
+  }
+
+  loader.style.display = "none";
+}
+
+function downloadVideo() {
+  if (!videoPlayer.src) return alert("Generate video first");
+
+  const a = document.createElement("a");
+  a.href = videoPlayer.src;
+  a.download = "voxify-video.mp4";
+  a.click();
 }
 
 // ================= IMAGES =================
 function generateImages() {
   const text = textInput.value.trim();
-  if (!text) return alert("Enter text!");
+  if (!text) return;
 
   clearInterval(slideInterval);
 
@@ -254,7 +261,6 @@ function generateImages() {
   startSlideshow(currentImages);
 }
 
-// ================= SLIDESHOW =================
 function startSlideshow(images) {
   imageContainer.innerHTML = "";
 
@@ -270,21 +276,6 @@ function startSlideshow(images) {
   show();
   slideInterval = setInterval(show, 3000);
 }
-
-// ================= DOWNLOAD IMAGES =================
-function downloadImages() {
-  currentImages.forEach((url, i) => {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `image_${i}.jpg`;
-    a.click();
-  });
-}
-
-// ================= THEME =================
-document.getElementById("themeToggle").onclick = () => {
-  document.body.classList.toggle("light");
-};
 
 // ================= INIT =================
 loadVoicesAPI();
