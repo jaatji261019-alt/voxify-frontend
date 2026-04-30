@@ -7,6 +7,7 @@ const loader = document.getElementById("loader");
 const textInput = document.getElementById("text");
 const voiceSelect = document.getElementById("voiceSelect");
 const voiceType = document.getElementById("voiceType");
+const voiceStyle = document.getElementById("voiceStyle"); // 🔥 NEW
 const languageSelect = document.getElementById("language");
 const player = document.getElementById("player");
 const imageContainer = document.getElementById("imageContainer");
@@ -34,10 +35,9 @@ async function loadVoicesAPI() {
     const data = await res.json();
 
     apiVoices = data;
-    filterVoices(); // 🔥 important
+    filterVoices();
 
-  } catch (err) {
-    console.log("⚠️ API failed → browser voices");
+  } catch {
     loadBrowserVoices();
   }
 }
@@ -47,30 +47,27 @@ function filterVoices() {
   voiceSelect.innerHTML = "";
 
   let filtered = [...apiVoices];
-  const type = voiceType.value;
-  const lang = languageSelect.value;
 
-  // 🎤 TYPE FILTER
-  if (type === "male") {
+  // TYPE
+  if (voiceType.value === "male") {
     filtered = filtered.filter(v => v.gender === "Male");
-  }
-  else if (type === "female") {
+  } else if (voiceType.value === "female") {
     filtered = filtered.filter(v => v.gender === "Female");
-  }
-  else if (type === "ai") {
+  } else if (voiceType.value === "ai") {
     filtered = filtered.filter(v => v.name.includes("Neural"));
   }
 
-  // 🌍 LANGUAGE FILTER
-  if (lang !== "auto") {
-    filtered = filtered.filter(v => v.lang.startsWith(lang));
+  // LANGUAGE
+  if (languageSelect.value !== "auto") {
+    filtered = filtered.filter(v =>
+      v.lang.startsWith(languageSelect.value)
+    );
   }
 
-  // 🔥 LIMIT + UI
   filtered.slice(0, 50).forEach(v => {
     const option = document.createElement("option");
     option.value = v.name;
-    option.textContent = `${v.friendly} (${v.lang})`;
+    option.textContent = `${v.friendly}`;
     voiceSelect.appendChild(option);
   });
 
@@ -79,7 +76,7 @@ function filterVoices() {
   }
 }
 
-// dropdown change events
+// ================= EVENTS =================
 voiceType.addEventListener("change", filterVoices);
 languageSelect.addEventListener("change", filterVoices);
 
@@ -91,7 +88,7 @@ function loadBrowserVoices() {
   voices.forEach((voice, i) => {
     const option = document.createElement("option");
     option.value = i;
-    option.textContent = `${voice.name} (${voice.lang})`;
+    option.textContent = `${voice.name}`;
     voiceSelect.appendChild(option);
   });
 }
@@ -126,9 +123,10 @@ async function uploadFile() {
 
 // ================= PREVIEW =================
 function preview() {
-  if (!textInput.value.trim()) return alert("Enter text!");
+  const text = textInput.value.trim();
+  if (!text) return alert("Enter text!");
 
-  const utter = new SpeechSynthesisUtterance(textInput.value);
+  const utter = new SpeechSynthesisUtterance(text);
 
   const selected = voices[voiceSelect.value];
   if (selected) utter.voice = selected;
@@ -143,7 +141,8 @@ function stopPreview() {
 
 // ================= AUDIO GENERATE =================
 async function generateAudio() {
-  if (!textInput.value.trim()) return alert("Enter text!");
+  const text = textInput.value.trim();
+  if (!text) return alert("Enter text!");
 
   loader.style.display = "block";
 
@@ -151,7 +150,7 @@ async function generateAudio() {
     let res;
 
     if (apiVoices.length) {
-      let selectedVoice = voiceSelect.value || "en-US-AriaNeural";
+      const selectedVoice = voiceSelect.value || "en-US-AriaNeural";
 
       res = await fetch(`${PYTHON_API}/tts`, {
         method: "POST",
@@ -159,10 +158,13 @@ async function generateAudio() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          text: textInput.value,
-          voice: selectedVoice
+          text: text,
+          voice: selectedVoice,
+          pitch: getPitch(),
+          rate: getRate()
         })
       });
+
     } else {
       res = await fetch(`${NODE_API}/tts`, {
         method: "POST",
@@ -170,8 +172,8 @@ async function generateAudio() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          text: textInput.value,
-          lang: detectLanguage(textInput.value)
+          text: text,
+          lang: detectLanguage(text)
         })
       });
     }
@@ -187,14 +189,35 @@ async function generateAudio() {
     player.style.display = "block";
     player.play();
 
-  } catch (err) {
-    console.log("⚠️ fallback speech");
-
-    const fallback = new SpeechSynthesisUtterance(textInput.value);
+  } catch {
+    const fallback = new SpeechSynthesisUtterance(text);
     speechSynthesis.speak(fallback);
   }
 
   loader.style.display = "none";
+}
+
+// ================= STYLE LOGIC =================
+function getPitch() {
+  switch (voiceStyle.value) {
+    case "deep": return "-20Hz";
+    case "soft": return "+10Hz";
+    case "sad": return "-10Hz";
+    case "angry": return "+15Hz";
+    case "story": return "+5Hz";
+    default: return "0Hz";
+  }
+}
+
+function getRate() {
+  switch (voiceStyle.value) {
+    case "deep": return "-10%";
+    case "soft": return "-5%";
+    case "sad": return "-20%";
+    case "angry": return "+15%";
+    case "story": return "-10%";
+    default: return "0%";
+  }
 }
 
 // ================= DOWNLOAD =================
@@ -217,14 +240,15 @@ function stopAudio() {
 
 // ================= IMAGES =================
 function generateImages() {
-  if (!textInput.value.trim()) return alert("Enter text!");
+  const text = textInput.value.trim();
+  if (!text) return alert("Enter text!");
 
   clearInterval(slideInterval);
 
-  const lines = textInput.value.split(".").filter(t => t.trim()).slice(0, 5);
+  const lines = text.split(".").filter(t => t.trim()).slice(0, 5);
 
   currentImages = lines.map(line =>
-    `https://image.pollinations.ai/prompt/${encodeURIComponent(line + " cinematic lighting 4k")}`
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(line + " cinematic 4k")}`
   );
 
   startSlideshow(currentImages);
