@@ -3,10 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Voxify AI</title>
+  <title>Voxify AI 🚀</title>
 
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+
+    .badge {
+      background: #ff4d4d;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+
+    .info {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+  </style>
 </head>
 
 <body>
@@ -16,8 +33,8 @@
   <!-- 🔥 HEADER -->
   <div class="header">
     <div>
-      <h1>🎙 Voxify AI</h1>
-      <p class="tagline">JAATJI'S WORLD 🚀</p>
+      <h1>🎙 Voxify AI <span class="badge">PRO</span></h1>
+      <p class="tagline">AI Audio • Image • Video Generator 🚀</p>
     </div>
     <button id="themeToggle">🌙</button>
   </div>
@@ -40,7 +57,7 @@
 
       <!-- 🌍 LANGUAGE -->
       <select id="language">
-        <option value="auto">🌍 Auto</option>
+        <option value="auto">🌍 Auto Detect</option>
         <option value="en">English</option>
         <option value="hi">Hindi</option>
         <option value="ar">Arabic</option>
@@ -54,11 +71,11 @@
         <option value="ai">🤖 AI Voice</option>
       </select>
 
-      <!-- 🎭 VOICE STYLE (🔥 NEW) -->
+      <!-- 🎭 VOICE STYLE -->
       <select id="voiceStyle">
         <option value="normal">🎤 Normal</option>
-        <option value="deep">🔊 Deep Voice</option>
-        <option value="soft">🌸 Soft Voice</option>
+        <option value="deep">🔊 Deep</option>
+        <option value="soft">🌸 Soft</option>
         <option value="sad">😢 Sad</option>
         <option value="angry">😡 Angry</option>
         <option value="story">📖 Story</option>
@@ -73,7 +90,7 @@
     <div class="buttons">
       <button onclick="preview()">▶ Preview</button>
       <button onclick="stopPreview()">⏹ Stop</button>
-      <button onclick="generateAudio()">⚡ Generate</button>
+      <button onclick="generateAudio()">⚡ Generate Audio</button>
     </div>
 
     <div class="buttons">
@@ -94,14 +111,17 @@
 
     <!-- 🎧 AUDIO PLAYER -->
     <audio id="player" controls style="display:none;"></audio>
+
   </div>
 
   <!-- ================= IMAGE ================= -->
   <div class="section">
     <h2>🖼 AI Image Generator</h2>
 
+    <p class="info">Auto generates cinematic images from text</p>
+
     <div class="buttons">
-      <button onclick="generateImages()">🖼 Generate</button>
+      <button onclick="generateImages()">🖼 Generate Images</button>
       <button onclick="downloadImages()">⬇ Download</button>
     </div>
 
@@ -110,19 +130,21 @@
 
   <!-- ================= VIDEO ================= -->
   <div class="section">
-    <h2>🎬 Video Generator</h2>
+    <h2>🎬 Cinematic Video Generator</h2>
 
     <p class="info">
-      👉 Step 1: Generate Audio <br>
-      👉 Step 2: Generate Video
+      ⚡ Step 1: Generate Audio <br>
+      🎬 Step 2: Generate Cinematic Video
     </p>
 
     <div class="buttons">
-      <button onclick="generateVideo()">🎥 Generate</button>
+      <button onclick="generateVideo()">🎥 Generate Video</button>
       <button onclick="downloadVideo()">⬇ Download</button>
     </div>
 
-    <video id="videoPlayer" controls style="display:none; width:100%;"></video>
+    <!-- VIDEO PLAYER -->
+    <video id="videoPlayer" controls style="display:none; width:100%; border-radius:10px;"></video>
+
   </div>
 
   <!-- ================= SHARE ================= -->
@@ -130,13 +152,13 @@
     <h2>🚀 Share Voxify AI</h2>
 
     <div class="buttons">
-      <button onclick="shareWhatsApp()">WhatsApp</button>
-      <button onclick="shareTelegram()">Telegram</button>
-      <button onclick="shareTwitter()">Twitter</button>
-      <button onclick="shareFacebook()">Facebook</button>
-      <button onclick="sharePinterest()">Pinterest</button>
-      <button onclick="shareApp()">More</button>
-      <button onclick="copyLink()">Copy Link</button>
+      <button onclick="shareWhatsApp()">🟢 WhatsApp</button>
+      <button onclick="shareTelegram()">🔵 Telegram</button>
+      <button onclick="shareTwitter()">🐦 Twitter</button>
+      <button onclick="shareFacebook()">📘 Facebook</button>
+      <button onclick="sharePinterest()">📌 Pinterest</button>
+      <button onclick="shareApp()">📤 More</button>
+      <button onclick="copyLink()">📋 Copy Link</button>
     </div>
   </div>
 
@@ -145,7 +167,7 @@
 <!-- ================= SCRIPT ================= -->
 <script src="script.js"></script>
 
-<!-- ================= EXTRA JS ================= -->
+<!-- ================= EXTRA ================= -->
 <script>
 function showFileName() {
   const file = document.getElementById("fileInput").files[0];
