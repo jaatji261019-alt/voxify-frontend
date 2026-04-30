@@ -38,7 +38,7 @@
     <!-- CONTROLS -->
     <div class="controls">
 
-      <!-- LANGUAGE -->
+      <!-- 🌍 LANGUAGE -->
       <select id="language">
         <option value="auto">🌍 Auto</option>
         <option value="en">English</option>
@@ -46,7 +46,7 @@
         <option value="ar">Arabic</option>
       </select>
 
-      <!-- VOICE TYPE -->
+      <!-- 🎤 VOICE TYPE -->
       <select id="voiceType">
         <option value="default">🎤 Default</option>
         <option value="male">👨 Male</option>
@@ -54,12 +54,22 @@
         <option value="ai">🤖 AI Voice</option>
       </select>
 
-      <!-- VOICES -->
+      <!-- 🎭 VOICE STYLE (🔥 NEW) -->
+      <select id="voiceStyle">
+        <option value="normal">🎤 Normal</option>
+        <option value="deep">🔊 Deep Voice</option>
+        <option value="soft">🌸 Soft Voice</option>
+        <option value="sad">😢 Sad</option>
+        <option value="angry">😡 Angry</option>
+        <option value="story">📖 Story</option>
+      </select>
+
+      <!-- 🎙 VOICES -->
       <select id="voiceSelect"></select>
 
     </div>
 
-    <!-- BUTTONS -->
+    <!-- 🎮 BUTTONS -->
     <div class="buttons">
       <button onclick="preview()">▶ Preview</button>
       <button onclick="stopPreview()">⏹ Stop</button>
@@ -73,16 +83,16 @@
       <button onclick="downloadAudio()">⬇ Download</button>
     </div>
 
-    <!-- PROGRESS -->
+    <!-- 📊 PROGRESS -->
     <div id="progressContainer">
       <div id="progressBar"></div>
     </div>
     <p id="progressText">Ready</p>
 
-    <!-- LOADER -->
+    <!-- 🔄 LOADER -->
     <div id="loader" class="loader"></div>
 
-    <!-- AUDIO -->
+    <!-- 🎧 AUDIO PLAYER -->
     <audio id="player" controls style="display:none;"></audio>
   </div>
 
